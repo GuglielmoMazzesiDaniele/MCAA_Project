@@ -129,8 +129,7 @@ def random_move(config, N):
 # =====================================================
 
 def metropolis_fast(config, N, E_old, beta):
-    Q = config.shape[0]
-
+    
     # Select queen index based on weights
     idx = sample_weighted_queen(config)
 
@@ -139,15 +138,15 @@ def metropolis_fast(config, N, E_old, beta):
     c_old = weight_queen(config, idx) # conflicts_for_queen(config, idx)
 
     # pick new empty cell
-    occupied = set(map(tuple, config))
+    occupied = set(map(tuple, config[:, :3]))
     while True:
-        new_pos = (np.random.randint(N), np.random.randint(N), np.random.randint(N), 0) # 0 is weight
+        new_pos = (np.random.randint(N), np.random.randint(N), np.random.randint(N))
         if new_pos not in occupied:
             break
 
     # apply move temporarily
     old_pos = tuple(config[idx])
-    config[idx] = new_pos
+    config[idx] = (new_pos, 0)
 
     # new conflicts
     c_new = conflicts_for_queen(config, idx)
@@ -161,23 +160,6 @@ def metropolis_fast(config, N, E_old, beta):
         # reject — revert
         config[idx] = old_pos
         return config, E_old
-
-def metropolis_step(config, N, beta):
-    """Perform a Metropolis step with inverse temperature beta."""
-    E_old = energy(config)
-    candidate = random_move(config, N)
-    E_new = energy(candidate)
-
-    dE = E_new - E_old
-
-    # Accept if energy decreases or with prob e^{-beta ΔE}
-    if dE <= 0:
-        return candidate, E_new
-    else:
-        if random.random() < np.exp(-beta * dE):
-            return candidate, E_new
-        else:
-            return config, E_old
 
 def solve_3d_queens(N, steps=20000, beta0=0.1, schedule=False):
     """
@@ -226,7 +208,6 @@ def solve_3d_queens(N, steps=20000, beta0=0.1, schedule=False):
 
 '''
 This function runs the solver for increasing N and plots the time taken.
-The parameters are: beta (initial inverse temperature) and schedule (boolean for annealing schedule).
 '''
 def run_time_vs_N(beta, schedule):
     Ns = list(range(3, 25))
