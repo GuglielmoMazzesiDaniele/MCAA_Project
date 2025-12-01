@@ -8,7 +8,7 @@ import time
 # =====================================================
 
 def conflicts_for_queen(config, idx):
-    """Return number of queens attacking queen idx using NumPy vectorization."""
+    """Return number of queens attacking queen idx"""
     Q = config.shape[0]
     px, py, pz, _ = config[idx]
 
@@ -76,11 +76,16 @@ def sample_weighted_queen(config):
     """Sample a queen index with probability proportional to its weight."""
     weights = config[:, 3]
     total_weight = np.sum(weights)
+    
     if total_weight == 0:
         # If all weights are zero, sample uniformly
-        return random.randrange(len(config))
+        idx = np.random.choice(len(config))
+        return idx, config[idx, 3], 0
+    
     probabilities = weights / total_weight
-    return np.random.choice(len(config), p=probabilities)
+    idx = np.random.choice(len(config), p=probabilities)
+    
+    return idx, config[idx, 3], int(total_weight)
 
 # =====================================================
 #  ENERGY FUNCTION: number of attacking pairs
@@ -100,62 +105,38 @@ def energy(config):
 
 
 # =====================================================
-#  RANDOM MOVE: pick a queen, move to empty cell
-# =====================================================
-
-def random_move(config, N):
-    """Return a new configuration with one queen moved."""
-    Q = len(config)
-    new_config = config.copy()
-
-    # Pick queen index
-    idx = random.randrange(Q)
-
-    # Available empty cells
-    occupied = set(config)
-    while True:
-        x = random.randrange(N)
-        y = random.randrange(N)
-        z = random.randrange(N)
-        if (x, y, z) not in occupied:
-            break
-
-    new_config[idx] = (x, y, z)
-    return new_config
-
-
-# =====================================================
 #  METROPOLIS–HASTINGS STEP
 # =====================================================
 
 def metropolis_fast(config, N, E_old, beta):
     
-    # Select queen index based on weights
-    idx = sample_weighted_queen(config)
+    # Select queen index based on weights, return also its weight and the total weight before move
+    idx, c_old, total_weight_before = sample_weighted_queen(config)
+    #print(f"Selected queen {idx} with weight {c_old}")
 
-    # old conflicts for this queen
-    total_weight_before = total_weight(config)
-    c_old = weight_queen(config, idx) # conflicts_for_queen(config, idx)
-
-    # pick new empty cell
+    # pick new empty cell and check it is empty
     occupied = set(map(tuple, config[:, :3]))
     while True:
         new_pos = (np.random.randint(N), np.random.randint(N), np.random.randint(N))
         if new_pos not in occupied:
             break
 
-    # apply move temporarily
     old_pos = tuple(config[idx])
-    config[idx] = (new_pos, 0)
+    config[idx] = np.array((*new_pos, 0)) # insert the new position with a 0 weight initially
 
     # new conflicts
     c_new = conflicts_for_queen(config, idx)
     total_weight_after = total_weight(config)
 
-    dE = c_new - c_old
+    E_new = E_old + (c_new - c_old)
+    #print(E_new)
 
-    if dE <= 0 or np.random.rand() < (np.exp(-beta * dE) * (c_new * total_weight_before) / (c_old * total_weight_after + 1e-10)): # small epsilon to avoid dividing by 0
-        return config, E_old + dE
+    if E_new <= E_old or np.random.rand() < min(1, (np.exp(-beta * (E_new - E_old)) * (c_new * total_weight_before) / (c_old * total_weight_after + 1e-10))): # small epsilon to avoid dividing by 0
+        
+        # Update all weights for the other queens
+        E = energy(config)
+        
+        return config, E
     else:
         # reject — revert
         config[idx] = old_pos
@@ -171,7 +152,7 @@ def solve_3d_queens(N, steps=20000, beta0=0.1, schedule=False):
     Q = N*N
 
     # Initial random configuration
-    config = np.zeros((Q, 4), dtype=int)
+    config = np.zeros((Q, 4)) 
     occupied = set()
 
     idx = 0
@@ -183,7 +164,6 @@ def solve_3d_queens(N, steps=20000, beta0=0.1, schedule=False):
             config[idx, 3] = 0
             idx += 1
 
-    #occupied = set(config)
     E = energy(config)
     energies = [E]
 
@@ -195,7 +175,7 @@ def solve_3d_queens(N, steps=20000, beta0=0.1, schedule=False):
         else:
             beta = beta0
 
-        config, E = metropolis_fast(np.array(config), N, energies[-1], beta)
+        config, E = metropolis_fast(config, N, energies[-1], beta)
         energies.append(E)
 
         # Found perfect solution
@@ -228,8 +208,8 @@ def run_time_vs_N(beta, schedule):
 
 
 if __name__ == "__main__":
-    N = 10
-    beta0 = 0.3
+    N = 5
+    beta0 = 0.2
     for i in range(1):
         
         print("Running solver...")
