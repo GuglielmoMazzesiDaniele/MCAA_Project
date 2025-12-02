@@ -9,7 +9,6 @@ import time
 
 def conflicts_for_queen(config, idx):
     """Return number of queens attacking queen idx"""
-    Q = config.shape[0]
     px, py, pz, _ = config[idx]
 
     DX = config[:,0] - px
@@ -40,9 +39,6 @@ def conflicts_for_queen(config, idx):
     weight_attack = np.sum(axis | xy | xz | yz | diag3)
     config[idx, 3] = weight_attack
     return weight_attack
-
-def weight_queen(config, idx):
-    return config[idx, 3]
 
 def total_weight(config):
     return np.sum(config[:, 3])
@@ -87,6 +83,15 @@ def sample_weighted_queen(config):
     
     return idx, config[idx, 3], int(total_weight)
 
+def sample_worst_queen(config):
+    """Sample the queen with the highest weight."""
+    weights = config[:, 3]
+    total_weight = np.sum(weights)
+    max_weight = np.max(weights)
+    candidates = np.where(weights == max_weight)[0]
+    idx = np.random.choice(candidates)
+    return idx, config[idx, 3], int(total_weight)
+
 # =====================================================
 #  ENERGY FUNCTION: number of attacking pairs
 # =====================================================
@@ -108,30 +113,32 @@ def energy(config):
 #  METROPOLIS–HASTINGS STEP
 # =====================================================
 
-def metropolis_fast(config, N, E_old, beta):
+def metropolis_fast(config, occupied_set, N, E_old, beta):
     
     # Select queen index based on weights, return also its weight and the total weight before move
-    idx, c_old, total_weight_before = sample_weighted_queen(config)
-    #print(f"Selected queen {idx} with weight {c_old}")
+    idx, c_old, total_weight_before = sample_worst_queen(config)
+    print(f"Selected queen {idx} with weight {c_old}")
 
     # pick new empty cell and check it is empty
-    occupied = set(map(tuple, config[:, :3]))
     while True:
         new_pos = (np.random.randint(N), np.random.randint(N), np.random.randint(N))
-        if new_pos not in occupied:
+        if new_pos not in occupied_set:
             break
 
     old_pos = tuple(config[idx])
+    
+    # ---------- TEMPORARY APPLY MOVE ----------
+    occupied_set.remove(old_pos[:3])
+    occupied_set.add(new_pos)
     config[idx] = np.array((*new_pos, 0)) # insert the new position with a 0 weight initially
 
     # new conflicts
     c_new = conflicts_for_queen(config, idx)
     total_weight_after = total_weight(config)
 
-    E_new = E_old + (c_new - c_old)
-    #print(E_new)
+    dE = c_new - c_old
 
-    if E_new <= E_old or np.random.rand() < min(1, (np.exp(-beta * (E_new - E_old)) * (c_new * total_weight_before) / (c_old * total_weight_after + 1e-10))): # small epsilon to avoid dividing by 0
+    if dE <= 0 or np.random.rand() < min(1, (np.exp(-beta * dE) * (c_new * total_weight_before) / (c_old * total_weight_after + 1e-10))): # small epsilon to avoid dividing by 0
         
         # Update all weights for the other queens
         E = energy(config)
@@ -140,7 +147,26 @@ def metropolis_fast(config, N, E_old, beta):
     else:
         # reject — revert
         config[idx] = old_pos
+        occupied_set.remove(new_pos)
+        occupied_set.add(old_pos[:3])
         return config, E_old
+    
+def latin_cube_initial(N):
+    config = []
+    for i in range(N):
+        for j in range(N):
+            z = (i + j) % N
+            config.append((i, j, z, 0))
+    return np.array(config, dtype=int)
+
+def random_initialization(N):
+    Q = N*N
+    config = []
+    occupied = set()
+    while len(config) < Q:
+        pos = (random.randrange(N), random.randrange(N), random.randrange(N), 0)
+        if pos not in occupied:
+            config.append(pos)
 
 def solve_3d_queens(N, steps=20000, beta0=0.1, schedule=False):
     """
@@ -149,33 +175,24 @@ def solve_3d_queens(N, steps=20000, beta0=0.1, schedule=False):
     beta0: initial inverse temperature
     """
 
-    Q = N*N
-
-    # Initial random configuration
-    config = np.zeros((Q, 4)) 
-    occupied = set()
-
-    idx = 0
-    while idx < Q:
-        pos = (random.randrange(N), random.randrange(N), random.randrange(N))
-        if pos not in occupied:
-            occupied.add(pos)
-            config[idx, :3] = pos
-            config[idx, 3] = 0
-            idx += 1
-
+    config = latin_cube_initial(N)
+    occupied_set = set(map(tuple, config[:, :3])) # to search easily occupied positions
     E = energy(config)
     energies = [E]
+    beta = beta0
 
     for t in range(1, steps+1):
 
         # Simulated annealing schedule
-        if schedule:
-            beta = beta0 * np.log(1+t)
+        if schedule and beta <= 2.0:
+            beta = 0.01 + (2.0 - 0.01) * (t / steps)
         else:
             beta = beta0
+            schedule = False
+            
+        #print(f"Step {t}, Energy: {energies[-1]}, Beta: {beta}")
 
-        config, E = metropolis_fast(config, N, energies[-1], beta)
+        config, E = metropolis_fast(config, occupied_set, N, energies[-1], beta)
         energies.append(E)
 
         # Found perfect solution
@@ -190,7 +207,7 @@ def solve_3d_queens(N, steps=20000, beta0=0.1, schedule=False):
 This function runs the solver for increasing N and plots the time taken.
 '''
 def run_time_vs_N(beta, schedule):
-    Ns = list(range(3, 25))
+    Ns = list(range(11, 12))
     times = []
 
     for N in Ns:
@@ -205,21 +222,20 @@ def run_time_vs_N(beta, schedule):
     plt.ylabel("Time (seconds)")
     plt.title("Time vs Board Size for 3D N-Queens Solver")
     plt.show()
-
-
-if __name__ == "__main__":
-    N = 5
-    beta0 = 0.2
+    
+def main():
+    N = 11
+    beta0 = 0.03
     for i in range(1):
         
         print("Running solver...")
-        config, energies = solve_3d_queens(N, steps=300000, beta0=beta0, schedule=True)
+        config, energies = solve_3d_queens(N, steps=4000, beta0=beta0, schedule=True)
 
         print("Final energy:", energies[-1])
         N += 1
 
-    # # Example output
-    print("Final config:", config)
+    # Example output
+    # print("Final config:", config)
 
     #If you want: save energies for plotting
     energies = energies[::100]  # Sample every 100th value
@@ -227,3 +243,5 @@ if __name__ == "__main__":
     plt.xlabel("t")
     plt.ylabel("Energy")
     plt.show()
+    
+main()

@@ -160,9 +160,9 @@ def random_move(config, N):
     new_config[idx] = (x, y, z)
     return new_config
 
-def number_position_delta_motion(config, idx, N):
+def number_position_delta_motion(config, occupied_set, idx, N):
     x, y, z = config[idx]
-    occupied = set(map(tuple, config))
+    #occupied = set(map(tuple, config))
     count = 0
     results = []
 
@@ -185,7 +185,7 @@ def number_position_delta_motion(config, idx, N):
 
                 new_pos = (nx, ny, nz)
 
-                if new_pos not in occupied:
+                if new_pos not in occupied_set:
                     count += 1
                     results.append(new_pos)
 
@@ -195,56 +195,77 @@ def number_position_delta_motion(config, idx, N):
 #  METROPOLIS–HASTINGS STEP
 # =====================================================
 
-def metropolis_fast(config, N, E_old, beta):
-    Q = config.shape[0]
+def metropolis_fast(config, occupied_set, N, E_old, beta):
 
-    idx = np.random.randint(Q)
+    idx = np.random.randint(N*N)
+
+    old_pos = tuple(config[idx])
 
     # old conflicts for this queen
     c_old = conflicts_for_queen(config, idx)
-    allowed_cells_before, allowed = number_position_delta_motion(config, idx, N)
+    allowed_cells_before, allowed = number_position_delta_motion(config, occupied_set, idx, N)
 
     # pick new empty cell
-    #occupied = set(map(tuple, config))
-    delta = (0, 0, 0)
     while True:
-        delta = (np.random.randint(-1, 2), np.random.randint(-1, 2), np.random.randint(-1, 2))
-        if tuple(config[idx] + np.array(delta)) in allowed:
+        delta = (np.random.randint(-1, 2),
+                 np.random.randint(-1, 2),
+                 np.random.randint(-1, 2))
+        new_pos = (old_pos[0] + delta[0], old_pos[1] + delta[1], old_pos[2] + delta[2])
+        if new_pos in allowed:
             break
 
-    # apply move temporarily
-    old_pos = tuple(config[idx])
-    config[idx] = tuple(config[idx] + np.array(delta))
-    allowed_cells_after, _ = number_position_delta_motion(config, idx, N)
+    # ---------- TEMPORARY APPLY MOVE ----------
+    occupied_set.remove(old_pos)
+    occupied_set.add(new_pos)
+    config[idx] = new_pos
+
+    allowed_cells_after, _ = number_position_delta_motion(config, occupied_set, idx, N)
 
     # new conflicts
     c_new = conflicts_for_queen(config, idx)
 
     dE = c_new - c_old
 
-    if dE <= 0 or np.random.rand() < min(1, np.exp(-beta * dE) * (allowed_cells_before / allowed_cells_after)):
+    # MH acceptance ratio
+    accept = (dE <= 0 or
+              np.random.rand() < min(1, np.exp(-beta * dE) * (allowed_cells_before / allowed_cells_after)))
+
+    if accept:
         return config, E_old + dE
-    else:
-        # reject — revert
-        config[idx] = old_pos
-        return config, E_old
 
-def metropolis_step(config, N, beta):
-    """Perform a Metropolis step with inverse temperature beta."""
-    E_old = energy(config)
-    candidate = random_move(config, N)
-    E_new = energy(candidate)
+    # ---------- REJECT: ROLLBACK ----------
+    occupied_set.remove(new_pos)
+    occupied_set.add(old_pos)
+    config[idx] = old_pos
 
-    dE = E_new - E_old
+    return config, E_old
+        
+def pairwise_distance_stats(config):
+    """
+    Compute the mean and variance of pairwise Euclidean distances
+    between all queens in the configuration.
+    
+    config: (Q, 3) integer positions.
+    
+    Returns: (mean_distance, variance_distance)
+    """
+    pts = config.astype(float)
+    Q = pts.shape[0]
 
-    # Accept if energy decreases or with prob e^{-beta ΔE}
-    if dE <= 0:
-        return candidate, E_new
-    else:
-        if random.random() < np.exp(-beta * dE):
-            return candidate, E_new
-        else:
-            return config, E_old
+    # Compute all pairwise differences using broadcasting
+    diff = pts[:, None, :] - pts[None, :, :]   # shape (Q, Q, 3)
+
+    # Norm of each difference vector
+    dist_matrix = np.linalg.norm(diff, axis=2)  # shape (Q, Q)
+
+    # We want upper triangle without diagonal
+    iu = np.triu_indices(Q, k=1)
+    distances = dist_matrix[iu]    # flatten all unique pairwise distances
+
+    mean_d = np.mean(distances)
+    var_d  = np.var(distances)
+
+    return mean_d, var_d
         
 def latin_cube_initial(N):
     config = []
@@ -254,6 +275,16 @@ def latin_cube_initial(N):
             config.append((i, j, z))
     return np.array(config, dtype=int)
 
+def random_initialization(N):
+    Q = N*N
+    config = []
+    occupied = set()
+    while len(config) < Q:
+        pos = (random.randrange(N), random.randrange(N), random.randrange(N))
+        if pos not in occupied:
+            occupied.add(pos)
+            config.append(pos)
+
 def solve_3d_queens(N, steps=20000, beta0=0.1, schedule=False):
     """
     N: board size => N^2 queens
@@ -261,40 +292,44 @@ def solve_3d_queens(N, steps=20000, beta0=0.1, schedule=False):
     beta0: initial inverse temperature
     """
 
-    Q = N*N
-
-    # Initial random configuration
-    # config = []
-    # occupied = set()
-    # while len(config) < Q:
-    #     pos = (random.randrange(N), random.randrange(N), random.randrange(N))
-    #     if pos not in occupied:
-    #         occupied.add(pos)
-    #         config.append(pos)
-
-    # occupied = set(config)
+    #config = random_initialization(N)
     config = latin_cube_initial(N)
-    #plot_3d_queens(config, N, title="Initial Configuration")
+    occupied_set = set(map(tuple, config)) # to search easily occupied positions
     E = energy(config)
+    
+    # Variables
     energies = [E]
+    means = []
+    variances = []
+    beta = beta0
 
     for t in range(1, steps+1):
 
         # Simulated annealing schedule
-        if schedule:
-            beta = beta0 * np.log(1+t)
+        if schedule and beta <= 3.0:
+            beta = 0.01 + (3.0 - 0.01) * (t / steps)
         else:
             beta = beta0
+            schedule = False
+            
+        #print(f"Step {t}, Energy: {energies[-1]}, Beta: {beta}")
 
-        config, E = metropolis_fast(np.array(config), N, energies[-1], beta)
+        config, E = metropolis_fast(np.array(config), occupied_set, N, energies[-1], beta)
         energies.append(E)
+        
+        mean, var = pairwise_distance_stats(config)
+        means.append(mean)
+        variances.append(var)
 
         # Found perfect solution
         if E == 0:
             print(f"Solution found at step {t}")
+            print(f"(N={N}, beta={beta}) : {config}")
             return config, energies
 
     print("Reached max steps")
+    print(f"(N={N}, beta={beta})")
+    print(f"mean distance: {np.mean(means)}, variance: {np.mean(variances)}")
     return config, energies
 
 def vary_beta(N, steps=20000, schedule=True):
@@ -309,7 +344,7 @@ def vary_beta(N, steps=20000, schedule=True):
     plt.plot(beta_values, results, marker='o')
     plt.xlabel("beta")
     plt.ylabel("Energy")
-    plt.title(f"3D N-Queens Energy vs Beta (N={N}, schedule={schedule})")
+    plt.title(f"3D N-Queens Energy vs Beta, delta algo (N={N}, schedule={schedule})")
     plt.show()
     
 def vary_N(beta0, max_N, steps=20000, schedule=True):
@@ -323,12 +358,74 @@ def vary_N(beta0, max_N, steps=20000, schedule=True):
     plt.plot(range(3, max_N+1), results, marker='o')
     plt.xlabel("N")
     plt.ylabel("Energy")
-    plt.title(f"3D N-Queens Energy vs Beta (beta0={beta0}, schedule={schedule})")
+    plt.title(f"3D N-Queens Energy vs Beta, delta algo (beta0={beta0}, schedule={schedule})")
     plt.show()
+    
+    plot_3d_queens(_, N-1, title=f"Final Configuration for N={N-1}")
 
 
 def main():
-    vary_beta(N=14, steps=20000, schedule=True)
+    outdir = "results"
+    import os
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
 
-    
-main()
+    ###########################
+    # Sweep 1: vary N
+    ###########################
+    beta0 = 0.1
+    max_N = 12
+    steps = 40000
+
+    energies_final = []
+    Ns = list(range(11, max_N + 1))
+
+    for N in Ns:
+        config, energies = solve_3d_queens(
+            N=N,
+            steps=steps,
+            beta0=beta0,
+            schedule=True
+        )
+        energies_final.append(min(energies))
+
+    plt.figure()
+    plt.plot(Ns, energies_final, marker='o')
+    for i,N in enumerate(Ns):
+        plt.text(N, energies_final[i], f"{energies_final[i]}", ha='center', va='bottom')
+    plt.xlabel("N")
+    plt.ylabel("Min Energy")
+    plt.title("Min Energy vs N")
+    plt.savefig(f"{outdir}/vary_N.png")
+    plt.close()
+
+
+    ###########################
+    # Sweep 2: vary beta
+    ###########################
+    N = 11
+    betas = [0.01,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4]
+    energies_beta = []
+
+    for b in betas:
+        config, energies = solve_3d_queens(
+            N=N,
+            steps=steps,
+            beta0=b,
+            schedule=True
+        )
+        energies_beta.append(min(energies))
+
+    plt.figure()
+    plt.plot(betas, energies_beta, marker='o')
+    for i,b in enumerate(betas):
+        plt.text(b, energies_beta[i], f"{energies_beta[i]}", ha='center', va='bottom')
+    plt.xlabel("beta0")
+    plt.ylabel("Min Energy")
+    plt.title(f"Min Energy vs beta0 (N={N})")
+    plt.savefig(f"{outdir}/vary_beta.png")
+    plt.close()
+
+
+if __name__ == "__main__":
+    main()

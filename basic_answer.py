@@ -6,6 +6,13 @@ import matplotlib.pyplot as plt
 #  GEOMETRY: 3D QUEEN ATTACK CHECK
 # =====================================================
 
+def plot_energy(energies):
+    energies = energies[::100]  # Sample every 100th value
+    plt.plot(energies)
+    plt.xlabel("t")
+    plt.ylabel("Energy")
+    plt.show()
+
 def conflicts_for_queen(config, idx):
     """Return number of queens attacking queen idx using NumPy vectorization."""
     Q = config.shape[0]
@@ -192,29 +199,44 @@ def solve_3d_queens(N, steps=20000, beta0=0.1, schedule=False):
         # Found perfect solution
         if E == 0:
             print(f"Solution found at step {t}")
+            print(f"(N={N}, beta={beta}) : {config}")
             return config, energies
 
     print("Reached max steps")
     return config, energies
 
 
-if __name__ == "__main__":
-    N = 10
-    beta0 = 0.3
-    for i in range(1):
-        
-        print("Running solver...")
-        config, energies = solve_3d_queens(N, steps=300000, beta0=beta0, schedule=True)
+def vary_beta(N, steps=20000, schedule=True):
+    beta_values = [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4]
+    results = []
 
-        print("Final energy:", energies[-1])
-        N += 1
+    for beta0 in beta_values:
+        print(f"Running solver with beta0={beta0}...")
+        _, energies = solve_3d_queens(N, steps=steps, beta0=beta0, schedule=schedule)
+        results.append(energies[-1])
 
-    # # Example output
-    # print("Final config:", config)
-
-    #If you want: save energies for plotting
-    energies = energies[::100]  # Sample every 100th value
-    plt.plot(energies)
-    plt.xlabel("t")
+    plt.plot(beta_values, results, marker='o')
+    plt.xlabel("beta")
     plt.ylabel("Energy")
+    plt.title(f"3D N-Queens Energy vs Beta, basic algo (N={N}, schedule={schedule})")
     plt.show()
+    
+def vary_N(beta0, max_N, steps=20000, schedule=True):
+    results = []
+
+    for N in range(3, max_N+1):
+        print(f"Running solver with N={N}...")
+        _, energies = solve_3d_queens(N, steps=steps, beta0=beta0, schedule=schedule)
+        results.append(energies[-1])
+
+    plt.plot(range(3, max_N+1), results, marker='o')
+    plt.xlabel("N")
+    plt.ylabel("Energy")
+    plt.title(f"3D N-Queens Energy vs Beta, basic algo (beta0={beta0}, schedule={schedule})")
+    plt.show()
+
+
+def main():
+    vary_beta(N=14, steps=20000, schedule=True)
+    
+main()
