@@ -9,6 +9,7 @@ def main():
     parser.add_argument('--N', type=int, required=True, help='Size of the board (N x N x N)')
     parser.add_argument('--max_iters', type=int, required=True, help='Maximum number of iterations')
     parser.add_argument('--beta', type=float, required=True, help='Beta parameter for annealing in the algorithm')
+    parser.add_argument('--k', type=int, required=False, default=None, help='Number of previous non conflicting queens for the initialization')
     
     args = parser.parse_args()
     
@@ -17,7 +18,8 @@ def main():
         N=args.N,
         max_iters=args.max_iters,
         scheduler=scheduler,
-        beta=args.beta 
+        beta=args.beta,
+        k=args.k
     )
 
     assignements, energies = q_problem.solve()
