@@ -1,6 +1,7 @@
 import argparse
 from N3Queen import N3Queens
-from utils.scheduler import LinearScheduler, LogScheduler
+import N3Queens2DGrid
+from utils.scheduler import LinearScheduler, LogScheduler, ExponentialScheduler
 import matplotlib.pyplot as plt
 
 def main():
@@ -11,16 +12,16 @@ def main():
     
     args = parser.parse_args()
     
-    scheduler = LinearScheduler(a = 1.0, b = 1/20000)
+    scheduler = ExponentialScheduler(end_beta=20, max_iters=args.max_iters, start_beta=args.beta)
+    q_problem = N3Queens2DGrid.N3Queens(
+        N=args.N,
+        max_iters=args.max_iters,
+        scheduler=scheduler,
+        beta=args.beta 
+    )
 
-    q_problem = N3Queens(N=args.N, 
-                         max_iters=args.max_iters, 
-                         beta=args.beta,
-                         scheduler=scheduler)
-    
     assignements, energies = q_problem.solve()
-
-    print(energies[-1])
+    
     plt.plot(energies)
     plt.savefig("./test.png")
     plt.close()
