@@ -6,7 +6,7 @@ class N3Queens:
     def __init__(self, N=8, 
                  max_iters=20000, 
                  beta=0.5, 
-                 init_function=None, 
+                 k = None, 
                  scheduler : Scheduler = None):
         self.N = N
         self.max_iters = max_iters
@@ -14,12 +14,19 @@ class N3Queens:
         self.scheduler = scheduler if scheduler != None else ConstantScheduler(self.beta)
         
         self.X, self.Y = np.indices((N, N))
-        self.initialize()
+        self.initialize(k)
 
-    def initialize(self):
+    def initialize(self, k = None):
         """Randomize the board"""
-        self.grid = np.random.randint(0, self.N, size=(self.N, self.N))
-        self.current_energy = self.compute_initial_energy()
+        if k == None:
+            self.grid = np.random.randint(0, self.N, size=(self.N, self.N))
+            self.current_energy = self.compute_initial_energy()
+        elif k >= 1: 
+            print(f"Init with {k} non conflicting queens")
+            self.smart_init(k)
+        else:
+            raise ValueError(f"k must be a None or an integer > 0")
+
 
     def solve(self):
         
@@ -98,3 +105,74 @@ class N3Queens:
             for y in range(self.N):
                 queens.append((x, y, self.grid[x, y]))
         return np.array(queens)
+    
+    def smart_init(self, k):
+        self.grid = np.full((self.N, self.N), -1, dtype=int)
+
+        placed_queens = []
+
+        for x in range(self.N):
+            for y in range(self.N):
+                best_z = 0 
+                min_conflicts = float('inf')
+
+                candidates = list(range(self.N))
+
+                random.shuffle(candidates)
+
+                for z_candidates in candidates:
+                    conflicts = self.count_partial_conflicts(x, y, z_candidates, placed_queens, k) 
+
+                    if conflicts == 0:
+                        best_z = z_candidates
+                        min_conflicts = 0
+                        break
+
+                    if conflicts < min_conflicts:
+                        min_conflicts = conflicts
+                        best_z = z_candidates
+                
+                self.grid[x, y] = best_z
+                placed_queens.append((x, y))
+
+        self.current_energy = self.compute_initial_energy()
+    
+    def count_partial_conflicts(self, x, y, z, placed_queens, k=None):
+        """
+        Helper to check conflicts only against specific queens.
+        """
+        conflicts = 0
+        
+        # Determine which queens to check (last k or all)
+        if k is not None:
+            targets = placed_queens[-k:]
+        else:
+            targets = placed_queens
+
+        # Vectorized check is hard with a partial list, so we do a quick loop.
+        # Since this runs only once at init, it's fine.
+        for (tx, ty) in targets:
+            tz = self.grid[tx, ty]
+            
+            dx = abs(x - tx)
+            dy = abs(y - ty)
+            dz = abs(z - tz)
+            
+            # Check for conflicts (Same logic as standard check)
+            
+            # 1. Axis (Horizontal only, since Vertical is impossible by loop)
+            # Same Z, and aligned on X or Y
+            axis = (dz == 0) and ((dx == 0) or (dy == 0))
+            
+            # 2. 2D Diagonals
+            xy_diag = (dz == 0) and (dx == dy)
+            xz_diag = (dy == 0) and (dx == dz)
+            yz_diag = (dx == 0) and (dy == dz)
+            
+            # 3. 3D Diagonal
+            diag3 = (dx == dy) and (dy == dz)
+            
+            if axis or xy_diag or xz_diag or yz_diag or diag3:
+                conflicts += 1
+                
+        return conflicts
