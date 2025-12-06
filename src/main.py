@@ -1,33 +1,28 @@
 import argparse
-from N3Queen import N3Queens
-import N3Queens2DGrid
-from utils.scheduler import LinearScheduler, LogScheduler, ExponentialScheduler
-import matplotlib.pyplot as plt
+from utils.runners import run_optimization, run_pipeline
+
 
 def main():
     parser = argparse.ArgumentParser(description='N3 Queens Problem Solver')
-    parser.add_argument('--N', type=int, required=True, help='Size of the board (N x N x N)')
-    parser.add_argument('--max_iters', type=int, required=True, help='Maximum number of iterations')
-    parser.add_argument('--beta', type=float, required=True, help='Beta parameter for annealing in the algorithm')
+    parser.add_argument('--mode', type=str, choices=['optimize', 'run'], default='run',
+                        help='Mode: "optimize" for BO optimization, "run" for single pipeline run')
+    parser.add_argument('--N', type=int, default=8, help='Size of the board (N x N x N)')
+    parser.add_argument('--max_iters', type=int, default=20000, help='Maximum number of iterations for the model')
+    parser.add_argument('--device', type=str, default='cpu', help='Device to use (cpu or cuda)')
+    
+    # Optimization-specific arguments
+    parser.add_argument('--max_iters_bo', type=int, default=200, help='Maximum number of BO iterations (optimize mode only)')
+    
+    # Pipeline-specific arguments
+    parser.add_argument('--beta', type=float, default=0.1, help='Initial beta parameter (run mode only)')
+    parser.add_argument('--end_beta', type=float, default=50.0, help='End beta parameter (run mode only)')
     
     args = parser.parse_args()
     
-    scheduler = ExponentialScheduler(end_beta=20, max_iters=args.max_iters, start_beta=args.beta)
-    q_problem = N3Queens2DGrid.N3Queens(
-        N=args.N,
-        max_iters=args.max_iters,
-        scheduler=scheduler,
-        beta=args.beta 
-    )
-
-    assignements, energies = q_problem.solve()
-    
-    plt.plot(energies)
-    plt.savefig("./test.png")
-    plt.close()
-
-    return
-
+    if args.mode == 'optimize':
+        run_optimization(args)
+    else:
+        run_pipeline(args)
 
 
 if __name__ == '__main__':
