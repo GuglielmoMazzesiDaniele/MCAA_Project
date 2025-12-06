@@ -8,6 +8,23 @@ class Scheduler(ABC):
     def step(self, model):
         pass
 
+class StepScheduler(Scheduler):
+    def __init__(self, beta, stepsize = 100):
+        pass
+
+    def step(self, model):
+        pass
+
+class ExponentialScheduler(Scheduler):
+    def __init__(self, start_beta=0.1, end_beta=50.0, max_iters=100000):
+        self.start_beta = start_beta
+        self.end_beta = end_beta
+        self.max_iters = max_iters
+        self.alpha = (end_beta / start_beta) ** (1 / max_iters)
+
+    def step(self, model):
+        model.beta = model.beta * self.alpha
+
 class ConstantScheduler(Scheduler):
     def __init__(self, beta):
         self.beta = beta

@@ -3,7 +3,11 @@ import numpy as np
 from utils.scheduler import ConstantScheduler, Scheduler
     
 class N3Queens:
-    def __init__(self, N=8, max_iters=20000, beta=0.5, init_function=None, scheduler : Scheduler = None):
+    def __init__(self, N=8, 
+                 max_iters=20000, 
+                 beta=0.5, 
+                 init_function=None, 
+                 scheduler : Scheduler = None):
         self.N = N
         self.max_iters = max_iters
         self.beta = beta
@@ -37,15 +41,18 @@ class N3Queens:
 
         
         print(f"Algorithm did not converge in {self.max_iters} steps, final energy : {energies[-1]}")
-        return self.format_output, energies
+        return self.format_output(), energies
 
     def step(self):
         N = self.N
         # Pick a random queen
         rx, ry = random.randrange(0, N), random.randrange(0, N)
-        
         old_z = self.grid[rx, ry]
-        new_z = random.randrange(0, N)
+
+        while True:
+            new_z = random.randrange(0, N)
+            if new_z != old_z:
+                break
 
         old_conflicts = self.conflicts_at(rx, ry, old_z)
         new_conlficts = self.conflicts_at(rx, ry, new_z)
