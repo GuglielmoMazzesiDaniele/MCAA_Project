@@ -12,6 +12,7 @@ def main():
     parser.add_argument('--reheating', action='store_true', help='Allow reheating')
     parser.add_argument('--patience', type=int, default=10000, help='Number of steps before reheating the model')
     
+    parser.add_argument('--K', type=int, default=None, help='Number of non-conflicting queens for smart initialization')
     # Optimization-specific arguments
     parser.add_argument('--max_iters_bo', type=int, default=200, help='Maximum number of BO iterations (optimize mode only)')
     
