@@ -20,7 +20,7 @@ class ExponentialScheduler(Scheduler):
         self.start_beta = start_beta
         self.end_beta = end_beta
         self.max_iters = max_iters
-        self.alpha = (end_beta / start_beta) ** (1 / max_iters)
+        self.alpha = (end_beta / start_beta) ** (1 / (max_iters * 0.01))
 
     def step(self, model):
         model.beta = model.beta * self.alpha

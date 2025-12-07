@@ -9,6 +9,8 @@ def main():
     parser.add_argument('--N', type=int, default=8, help='Size of the board (N x N x N)')
     parser.add_argument('--max_iters', type=int, default=20000, help='Maximum number of iterations for the model')
     parser.add_argument('--device', type=str, default='cpu', help='Device to use (cpu or cuda)')
+    parser.add_argument('--reheating', action='store_true', help='Allow reheating')
+    parser.add_argument('--patience', type=int, default=10000, help='Number of steps before reheating the model')
     
     # Optimization-specific arguments
     parser.add_argument('--max_iters_bo', type=int, default=200, help='Maximum number of BO iterations (optimize mode only)')
