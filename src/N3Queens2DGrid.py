@@ -7,9 +7,17 @@ class N3Queens:
                  max_iters=20000, 
                  beta=0.5, 
                  k = None, 
-                 scheduler : Scheduler = None):
+                 scheduler : Scheduler = None,
+                 reheating : bool = False,
+                 patience : int = 10000):
         self.N = N
         self.max_iters = max_iters
+        
+        self.reheating = reheating
+        self.patience = patience
+
+        self.last_mod = 1
+        self.checkpoint_beta = beta
         self.beta = beta
         self.scheduler = scheduler if scheduler != None else ConstantScheduler(self.beta)
         
@@ -26,8 +34,7 @@ class N3Queens:
             self.smart_init(k)
         else:
             raise ValueError(f"k must be a None or an integer > 0")
-
-
+    
     def solve(self):
         
         print(f"Solving problem for N={self.N}")
@@ -46,7 +53,10 @@ class N3Queens:
             if t % 5000 == 0:
                 print(f"Step {t}: Energy = {self.current_energy}, Beta = {self.beta:.2f}")
 
-        
+            if self.reheating and ((self.t - self.last_mod) >= self.patience):
+                self.shuffle_and_reheat()
+                print(f"SHUFFLE Step {t}: Energy = {self.current_energy}, Beta = {self.beta:.2f}")
+
         print(f"Algorithm did not converge in {self.max_iters} steps, final energy : {energies[-1]}")
         return self.format_output(), energies
 
@@ -65,6 +75,10 @@ class N3Queens:
         new_conlficts = self.conflicts_at(rx, ry, new_z)
 
         delta_e = new_conlficts - old_conflicts
+
+        if delta_e < 0:
+            self.last_mod = self.t # This allow the shuffle method to check if shuffling is needed
+            # self.checkpoint_beta = self.checkpoint_beta
 
         # We move only if we accept, otherwise we do nothing 
         if delta_e <= 0 or random.random() < np.exp(-delta_e * self.beta):
@@ -107,6 +121,11 @@ class N3Queens:
         return np.array(queens)
     
     def smart_init(self, k):
+        """
+        Initialize the grid with the least amount of conflicts for the k previous queens
+        
+        :param k: Number of previous queen to avoid conflict with
+        """
         self.grid = np.full((self.N, self.N), -1, dtype=int)
 
         placed_queens = []
@@ -136,6 +155,54 @@ class N3Queens:
                 placed_queens.append((x, y))
 
         self.current_energy = self.compute_initial_energy()
+
+    def shuffle_and_reheat(self, Q: int = 25):
+        """
+        Shuffle the Q queens positions to not have been modified for the longest time 
+        and restore the beta parameters to what it was at the last modification
+        
+        :param Q: Number of queen to select for shuffling 
+
+        Note : Algorithm description
+
+        the patience parameter select how long the model accepts to not do any change, once
+        this threshold is passed.
+
+        If the model is still solving at time t, the it must be that it has not converged and 
+        if the model has not made any change for some time it could mean that the model cooled down
+        and is not able to accept interesting moves anymore. 
+
+        Therefore when the model observe that it has not moved any queen for a while and the energy
+        is more than 0, then it will try to pick a few queens and then shuffle them by assigning them
+        with a random value, recompute the energy of the model, and then restore a previous value for 
+        beta
+
+        ## TODO add a def reset() to the schedulers (Linear schedulers might struggle with this otherwise)
+        """
+        #First we want to pick Q queens
+        picked = []
+        picked_set = set()
+
+        while len(picked) != Q:
+            rx, ry = random.randrange(0, self.N), random.randrange(0, self.N)
+            
+            if (rx, ry) not in picked_set:
+                picked_set.add((rx, ry))
+                picked.append((rx, ry))
+
+                while True:
+                    rz = np.random.randint(0, self.N)
+
+                    if rz != self.grid[rx, ry]:
+                        break
+                
+                self.grid[rx, ry] = rz
+        
+        self.current_energy = self.compute_initial_energy()
+        self.checkpoint_beta = self.checkpoint_beta * 1.1
+        self.beta = self.checkpoint_beta
+        self.last_mod = self.t
+
     
     def count_partial_conflicts(self, x, y, z, placed_queens, k=None):
         """

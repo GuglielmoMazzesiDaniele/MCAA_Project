@@ -57,14 +57,16 @@ def run_pipeline(args):
     scheduler = ExponentialScheduler(
         start_beta=args.beta,
         end_beta=args.end_beta,
-        max_iters=args.max_iters
+        max_iters=args.max_iters,
     )
     
     q_problem = N3Queens2DGrid.N3Queens(
         N=args.N,
         max_iters=args.max_iters,
         scheduler=scheduler,
-        beta=args.beta
+        beta=args.beta,
+        reheating=args.reheating,
+        patience=args.patience
     )
 
     assignments, energies = q_problem.solve()
