@@ -1,0 +1,36 @@
+[2025-12-06T19:07:28.712033] Iteration init_0 | N=11 | beta: 0.869228, param_0: 0.869228, param_1: 56.244588 | Final energy: 0
+[2025-12-06T19:08:57.551063] Iteration 4 | N=11 | beta: 1.000000, param_0: 1.000000, param_1: 54.539811 | Final energy: 0
+[2025-12-06T19:10:11.688800] Iteration 11 | N=11 | beta: 1.000000, param_0: 1.000000, param_1: 68.746103 | Final energy: 0
+[2025-12-06T19:12:25.653266] Iteration init_0 | N=11 | beta: 0.301562, param_0: 0.301562, param_1: 21.534019 | Final energy: 0
+[2025-12-06T19:12:52.801085] Iteration init_3 | N=11 | beta: 0.068481, param_0: 0.068481, param_1: 92.840518 | Final energy: 0
+[2025-12-06T19:13:19.964883] Iteration 1 | N=11 | beta: 0.288862, param_0: 0.288862, param_1: 22.575923 | Final energy: 0
+[2025-12-06T19:13:29.239630] Iteration 2 | N=11 | beta: 0.170997, param_0: 0.170997, param_1: 21.939801 | Final energy: 0
+[2025-12-06T19:14:32.050026] Iteration 8 | N=11 | beta: 0.199554, param_0: 0.199554, param_1: 10.000000 | Final energy: 0
+[2025-12-06T19:14:57.705185] Iteration 11 | N=11 | beta: 0.324476, param_0: 0.324476, param_1: 83.676515 | Final energy: 0
+[2025-12-06T19:16:33.341282] Iteration 20 | N=11 | beta: 0.278589, param_0: 0.278589, param_1: 10.000000 | Final energy: 0
+[2025-12-06T19:17:06.078981] Iteration 23 | N=11 | beta: 0.010000, param_0: 0.010000, param_1: 10.000000 | Final energy: 0
+[2025-12-06T19:19:46.874171] Iteration 38 | N=11 | beta: 0.360280, param_0: 0.360280, param_1: 22.398998 | Final energy: 0
+[2025-12-06T19:19:51.835524] Iteration 39 | N=11 | beta: 0.386711, param_0: 0.386711, param_1: 22.479402 | Final energy: 0
+[2025-12-06T19:20:08.523431] Iteration 41 | N=11 | beta: 0.285811, param_0: 0.285811, param_1: 22.226755 | Final energy: 0
+[2025-12-06T19:20:24.548769] Iteration 43 | N=11 | beta: 0.348114, param_0: 0.348114, param_1: 84.324298 | Final energy: 0
+[2025-12-06T19:23:11.529998] Iteration 58 | N=11 | beta: 0.393096, param_0: 0.393096, param_1: 10.000000 | Final energy: 0
+[2025-12-06T19:24:02.231651] Iteration 63 | N=11 | beta: 0.374300, param_0: 0.374300, param_1: 10.000000 | Final energy: 0
+[2025-12-06T19:25:39.128155] Iteration 72 | N=11 | beta: 0.358128, param_0: 0.358128, param_1: 10.000000 | Final energy: 0
+[2025-12-06T19:25:45.345967] Iteration 73 | N=11 | beta: 0.368007, param_0: 0.368007, param_1: 10.000000 | Final energy: 0
+[2025-12-06T19:26:48.983767] Iteration 79 | N=11 | beta: 0.356625, param_0: 0.356625, param_1: 10.000000 | Final energy: 0
+[2025-12-06T19:55:14.320601] Iteration 13 | N=13, K=60 | beta: 1.000000, param_0: 1.000000, param_1: 10.000000 | Final energy: 0
+[2025-12-06T20:02:34.669558] Iteration init_2 | N=11, K=None | beta: 0.656573, param_0: 0.656573, param_1: 95.702283 | Final energy: 0
+[2025-12-06T20:03:11.711179] Iteration 1 | N=11, K=None | beta: 0.644480, param_0: 0.644480, param_1: 95.009187 | Final energy: 0
+[2025-12-06T20:03:15.704152] Iteration 2 | N=11, K=None | beta: 0.650056, param_0: 0.650056, param_1: 75.617284 | Final energy: 0
+[2025-12-06T20:03:44.495584] Iteration 5 | N=11, K=None | beta: 0.755744, param_0: 0.755744, param_1: 94.877152 | Final energy: 0
+[2025-12-06T20:03:48.720101] Iteration 6 | N=11, K=None | beta: 0.724987, param_0: 0.724987, param_1: 74.442043 | Final energy: 0
+[2025-12-06T20:03:52.056435] Iteration 7 | N=11, K=None | beta: 0.794343, param_0: 0.794343, param_1: 75.991746 | Final energy: 0
+[2025-12-06T20:05:52.175393] Iteration 18 | N=11, K=None | beta: 1.000000, param_0: 1.000000, param_1: 100.000000 | Final energy: 0
+[2025-12-06T20:06:05.025896] Iteration 20 | N=11, K=None | beta: 1.000000, param_0: 1.000000, param_1: 100.000000 | Final energy: 0
+[2025-12-06T20:06:52.992563] Iteration 25 | N=11, K=None | beta: 1.000000, param_0: 1.000000, param_1: 48.747790 | Final energy: 0
+[2025-12-06T20:06:58.786618] Iteration 26 | N=11, K=None | beta: 1.000000, param_0: 1.000000, param_1: 10.000000 | Final energy: 0
+[2025-12-06T20:07:25.929124] Iteration 29 | N=11, K=None | beta: 1.000000, param_0: 1.000000, param_1: 10.000000 | Final energy: 0
+[2025-12-06T20:08:14.793930] Iteration 34 | N=11, K=None | beta: 1.000000, param_0: 1.000000, param_1: 10.000000 | Final energy: 0
+[2025-12-06T20:08:28.506393] Iteration 36 | N=11, K=None | beta: 1.000000, param_0: 1.000000, param_1: 10.000000 | Final energy: 0
+[2025-12-06T20:09:15.926924] Iteration 41 | N=11, K=None | beta: 1.000000, param_0: 1.000000, param_1: 100.000000 | Final energy: 0
+[2025-12-06T20:09:21.187062] Iteration 42 | N=11, K=None | beta: 1.000000, param_0: 1.000000, param_1: 100.000000 | Final energy: 0

@@ -9,7 +9,7 @@ def main():
     parser.add_argument('--N', type=int, default=8, help='Size of the board (N x N x N)')
     parser.add_argument('--max_iters', type=int, default=20000, help='Maximum number of iterations for the model')
     parser.add_argument('--device', type=str, default='cpu', help='Device to use (cpu or cuda)')
-    
+    parser.add_argument('--K', type=int, default=None, help='Number of non-conflicting queens for smart initialization')
     # Optimization-specific arguments
     parser.add_argument('--max_iters_bo', type=int, default=200, help='Maximum number of BO iterations (optimize mode only)')
     
