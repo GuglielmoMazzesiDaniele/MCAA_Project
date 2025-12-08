@@ -58,9 +58,11 @@ def plot_3d_queens(config, N, title="3D Queens Configuration"):
     
 def plot_energy(energies):
     energies = energies[::100]  # Sample every 100th value
+    
     plt.plot(energies)
     plt.xlabel("t")
     plt.ylabel("Energy")
+    plt.title("Energy vs MCMC Steps (min E = {})".format(min(energies)))
     plt.show()
 
 def conflicts_for_queen(config, idx):
@@ -385,7 +387,7 @@ def main():
             N=N,
             steps=steps,
             beta0=beta0,
-            schedule=True
+            schedule=False
         )
         energies_final.append(min(energies))
 
@@ -426,6 +428,15 @@ def main():
     plt.savefig(f"{outdir}/vary_beta.png")
     plt.close()
 
+def main2():
+    config, energies = solve_3d_queens(
+            N=11,
+            steps=2000000,
+            beta0=0.1,
+            schedule=True
+        )
+    
+    plot_energy(energies)
 
 if __name__ == "__main__":
-    main()
+    main2()
