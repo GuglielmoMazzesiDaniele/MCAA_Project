@@ -22,6 +22,8 @@ def main():
     # Pipeline-specific arguments
     parser.add_argument('--beta', type=float, default=0.1, help='Initial beta parameter (run mode only)')
     parser.add_argument('--end_beta', type=float, default=50.0, help='End beta parameter (run mode only)')
+
+    parser.add_argument('--gibbs', action='store_true', help='Use gibbs sampling instead of Metropolis-Hastings')
     
     args = parser.parse_args()
 

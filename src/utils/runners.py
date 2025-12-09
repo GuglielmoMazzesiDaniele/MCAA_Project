@@ -22,6 +22,7 @@ def run_optimization(config: BOConfig, args):
         K=args.K,
         reheating=args.reheating,
         patience=args.patience,
+        gibbs=args.gibbs
     )
 
     print(f"\nOptimization complete!")
@@ -53,7 +54,8 @@ def run_pipeline(args, scheduler):
         beta=args.beta,
         reheating=args.reheating,
         patience=args.patience,
-        K=args.K
+        K=args.K,
+        gibbs=args.gibbs
     )
 
     assignments, energies = q_problem.solve()
