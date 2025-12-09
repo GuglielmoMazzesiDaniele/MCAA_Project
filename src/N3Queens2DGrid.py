@@ -6,10 +6,11 @@ class N3Queens:
     def __init__(self, N=8, 
                  max_iters=20000, 
                  beta=0.5, 
-                 k = None, 
+                 K = None, 
                  scheduler : Scheduler = None,
                  reheating : bool = False,
-                 patience : int = 10000):
+                 patience : int = 10000,
+                 mh: bool = True):
         self.N = N
         self.max_iters = max_iters
         
@@ -20,9 +21,12 @@ class N3Queens:
         self.checkpoint_beta = beta
         self.beta = beta
         self.scheduler = scheduler if scheduler != None else ConstantScheduler(self.beta)
-        
+
         self.X, self.Y = np.indices((N, N))
-        self.initialize(k)
+        self.initialize(K)
+        self.mh = mh
+
+        self.n_queens_shuffle = self.N**2
 
     def initialize(self, k = None):
         """Randomize the board"""
@@ -48,14 +52,15 @@ class N3Queens:
 
             if self.current_energy == 0:
                 print(f"Solved in {t} steps")
+                print(f"number of conflict energy : {self.compute_initial_energy()}")
                 return self.format_output(), energies
             
             if t % 5000 == 0:
                 print(f"Step {t}: Energy = {self.current_energy}, Beta = {self.beta:.2f}")
 
             if self.reheating and ((self.t - self.last_mod) >= self.patience):
-                self.shuffle_and_reheat()
-                print(f"SHUFFLE Step {t}: Energy = {self.current_energy}, Beta = {self.beta:.2f}")
+                self.shuffle_and_reheat(self.N)
+                print(f"SHUFFLE shuffle queens at step {t}: Energy = {self.current_energy}, Beta = {self.beta:.2f}")
 
         print(f"Algorithm did not converge in {self.max_iters} steps, final energy : {energies[-1]}")
         return self.format_output(), energies
@@ -78,7 +83,6 @@ class N3Queens:
 
         if delta_e < 0:
             self.last_mod = self.t # This allow the shuffle method to check if shuffling is needed
-            # self.checkpoint_beta = self.checkpoint_beta
 
         # We move only if we accept, otherwise we do nothing 
         if delta_e <= 0 or random.random() < np.exp(-delta_e * self.beta):
@@ -104,7 +108,8 @@ class N3Queens:
         xy_diag = (DZ == 0) & (ADX == ADY)
         diag3 = (ADX == ADY) & (ADY == ADZ)
 
-        return np.sum(z_axis | xz_diag | yz_diag | xy_diag | diag3)
+        tot = np.sum(z_axis | xz_diag | yz_diag | xy_diag | diag3)
+        return tot
 
     def compute_initial_energy(self):
         E = 0
@@ -198,10 +203,14 @@ class N3Queens:
                 
                 self.grid[rx, ry] = rz
         
-        self.current_energy = self.compute_initial_energy()
-        self.checkpoint_beta = self.checkpoint_beta * 1.1
-        self.beta = self.checkpoint_beta
+        new_e = self.compute_initial_energy()
+        
+        if self.current_energy < new_e:
+            self.beta = self.checkpoint_beta
+
+        self.current_energy = new_e
         self.last_mod = self.t
+        self.scheduler.reset(self)
 
     
     def count_partial_conflicts(self, x, y, z, placed_queens, k=None):

@@ -92,9 +92,9 @@ def optimize_with_bo(
         max_iters_model=20000,
         max_iters_bo=200,
         num_restarts=128,
-        base_knowledges=5,
+        base_knowledges=2,
         log_file="successful_params.log",
-        K=None):
+        **model_kwargs):
     """
     Run Bayesian Optimization to find optimal hyperparameters.
     
@@ -120,8 +120,8 @@ def optimize_with_bo(
         Number of initial Sobol samples
     log_file : str
         Path to log file for successful convergences (energy = 0)
-    K : int or None
-        Number of non-conflicting queens for smart initialization
+    **model_kwargs : dict
+        Additional keyword arguments to pass to N3Queens (e.g., k=K)
     """
 
     x_train = draw_sobol_samples(bounds=bounds, n=base_knowledges, q=1)
@@ -133,7 +133,7 @@ def optimize_with_bo(
     for i, x in enumerate(x_train):
         beta, *scheduler_params = output_parser(x.flatten())
         scheduler = scheduler_class(*scheduler_params)
-        model = N3Queens2DGrid.N3Queens(N=N, beta=beta, scheduler=scheduler, max_iters=max_iters_model, k=K)
+        model = N3Queens2DGrid.N3Queens(N=N, beta=beta, scheduler=scheduler, max_iters=max_iters_model, **model_kwargs)
         final_config, energies = model.solve()
         final_energy = energies[-1]
         ## Maximizing the negative energies is equivalent to minimizing the positive energy
@@ -141,7 +141,7 @@ def optimize_with_bo(
         
         # Log if converged to 0
         if final_energy == 0:
-            log_successful_params(log_file, x, beta, scheduler_params, final_energy, f"init_{i}", N, K)
+            log_successful_params(log_file, x, beta, scheduler_params, final_energy, f"init_{i}", N, model_kwargs.get('k', None))
     
     y_train = torch.tensor(y_train, dtype=datatype).unsqueeze(-1)
 
@@ -152,14 +152,14 @@ def optimize_with_bo(
         next = next.to(dtype=datatype)
         beta, *scheduler_params = output_parser(next.flatten())
         scheduler = scheduler_class(*scheduler_params)
-        model = N3Queens2DGrid.N3Queens(beta=beta, scheduler=scheduler, N=N, max_iters=max_iters_model, k=K)
+        model = N3Queens2DGrid.N3Queens(beta=beta, scheduler=scheduler, N=N, max_iters=max_iters_model, **model_kwargs)
 
         final_config, energies = model.solve()
         final_energy = energies[-1]
         
         # Log if converged to 0
         if final_energy == 0:
-            log_successful_params(log_file, next, beta, scheduler_params, final_energy, iter_idx, N, K)
+            log_successful_params(log_file, next, beta, scheduler_params, final_energy, iter_idx, N, model_kwargs.get('k', None))
         
         y_train = torch.cat([y_train, torch.tensor([[-final_energy]], dtype=datatype)])
         x_train = torch.cat([x_train, next])
