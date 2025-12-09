@@ -2,6 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 import N3Queens2DGrid
 from utils.scheduler import ExponentialScheduler
+from utils.plot import plot_energy_evolution
 
 from optim.configs import BOConfig
 from optim.bo_optim import optimize_with_bo
@@ -18,25 +19,21 @@ def run_optimization(config: BOConfig, args):
         output_parser=config.parser,
         max_iters_model=args.max_iters,
         max_iters_bo=args.max_iters_bo,
-        log_file=f"successful_params_N={args.N}_K={args.K}",
+        log_file=f"params_N={args.N}_K={args.K}_rh={args.reheating}_pat={args.patience}_sch={config.scheduler.name()}_m_iter={args.max_iters}_m_iter_bo={args.max_iters_bo}_move={args.proposal_move}.log",
         K=args.K,
         reheating=args.reheating,
         patience=args.patience,
-    )
+        name_proposal_move=args.proposal_move
+    )    
 
     print(f"\nOptimization complete!")
     print(f"Best parameters: {best_params}")
-    print(f"Best energy: {best_energy}")
+    print(f"Minimal energy: {min(energies)}")
     
-    plt.plot(energies)
-    plt.xlabel("Iteration")
-    plt.ylabel("Energy")
-    plt.title(f"Energy evolution (best run) - Final: {best_energy}")
-    plt.savefig("./bo_optimization_result.png")
-    plt.close()
+    plot_energy_evolution(energies, args, args.proposal_move, filename="pipeline_result.png")
 
 
-def run_pipeline(args, scheduler):
+def run_pipeline(args, scheduler, name_proposal_move):
     """Run the N3Queens solver with specified parameters.
     
     Parameters:
@@ -53,19 +50,15 @@ def run_pipeline(args, scheduler):
         beta=args.beta,
         reheating=args.reheating,
         patience=args.patience,
-        K=args.K
+        K=args.K,
+        name_proposal_move=name_proposal_move
     )
 
     assignments, energies = q_problem.solve()
     
     print(f"\nPipeline complete!")
-    print(f"Final energy: {energies[-1]}")
+    print(f"Minimal energy: {min(energies)}")
     
-    plt.plot(energies)
-    plt.xlabel("Iteration")
-    plt.ylabel("Energy")
-    plt.title(f"Energy evolution - Final: {energies[-1]}")
-    plt.savefig("./pipeline_result.png")
-    plt.close()
+    plot_energy_evolution(energies, args, name_proposal_move, filename="pipeline_result.png")
     
     return assignments, energies

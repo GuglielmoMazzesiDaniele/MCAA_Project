@@ -35,6 +35,10 @@ class ExponentialScheduler(Scheduler):
     def reset(self, model):
         self.alpha = (self.end_beta / self.start_beta) ** (1 / (self.max_iters - model.t))
         pass
+    
+    @staticmethod
+    def name():
+        return "exponential"
 
 class ConstantScheduler(Scheduler):
     def __init__(self, beta):
@@ -42,6 +46,10 @@ class ConstantScheduler(Scheduler):
 
     def step(self, model):
         model.beta = self.beta
+    
+    @staticmethod
+    def name():
+        return "constant"
 
 class GeometricScheduler(Scheduler):
     def __init__(self, alpha=1.5):
@@ -49,6 +57,10 @@ class GeometricScheduler(Scheduler):
 
     def step(self, model):
         model.beta *= self.alpha
+    
+    @staticmethod
+    def name():
+        return "geometric"
 
 class LinearScheduler(Scheduler):
     def __init__(self, a=1.0, b=0.0):
@@ -57,6 +69,10 @@ class LinearScheduler(Scheduler):
 
     def step(self, model):
         model.beta = self.a * model.beta + self.b
+        
+    @staticmethod
+    def name():
+        return "linear"
 
 class LogScheduler(Scheduler):
     def __init__(self, alpha=0.2):
@@ -64,4 +80,8 @@ class LogScheduler(Scheduler):
 
     def step(self, model):
         model.beta = self.alpha * np.log(2 * model.t)
+        
+    @staticmethod
+    def name():
+        return "logarithmic"
 

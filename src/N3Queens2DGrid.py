@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from utils.scheduler import ConstantScheduler, Scheduler
+from utils.proposal_move import RandomMove, ProposalMove, select_proposal_move
     
 class N3Queens:
     def __init__(self, N=8, 
@@ -8,6 +9,7 @@ class N3Queens:
                  beta=0.5, 
                  K = None, 
                  scheduler : Scheduler = None,
+                 name_proposal_move : str = "random",
                  reheating : bool = False,
                  patience : int = 10000,
                  mh: bool = True):
@@ -21,6 +23,8 @@ class N3Queens:
         self.checkpoint_beta = beta
         self.beta = beta
         self.scheduler = scheduler if scheduler != None else ConstantScheduler(self.beta)
+        
+        self.proposal_move = select_proposal_move(name_proposal_move, self)
 
         self.X, self.Y = np.indices((N, N))
         self.initialize(K)
@@ -46,7 +50,8 @@ class N3Queens:
 
         for t in range(1, self.max_iters + 1):
             self.t = t
-            self.step()
+            #self.step()
+            self.proposal_move.step()
             self.scheduler.step(self)
             energies.append(self.current_energy)
 
@@ -64,30 +69,6 @@ class N3Queens:
 
         print(f"Algorithm did not converge in {self.max_iters} steps, final energy : {energies[-1]}")
         return self.format_output(), energies
-
-    def step(self):
-        N = self.N
-        # Pick a random queen
-        rx, ry = random.randrange(0, N), random.randrange(0, N)
-        old_z = self.grid[rx, ry]
-
-        while True:
-            new_z = random.randrange(0, N)
-            if new_z != old_z:
-                break
-
-        old_conflicts = self.conflicts_at(rx, ry, old_z)
-        new_conlficts = self.conflicts_at(rx, ry, new_z)
-
-        delta_e = new_conlficts - old_conflicts
-
-        if delta_e < 0:
-            self.last_mod = self.t # This allow the shuffle method to check if shuffling is needed
-
-        # We move only if we accept, otherwise we do nothing 
-        if delta_e <= 0 or random.random() < np.exp(-delta_e * self.beta):
-            self.grid[rx, ry] = new_z
-            self.current_energy += delta_e
 
     def conflicts_at(self, x, y, z):
         DX = self.X - x

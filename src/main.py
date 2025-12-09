@@ -1,6 +1,7 @@
 import argparse
 from utils.runners import run_optimization, run_pipeline
 import utils.scheduler as schedule
+import utils.proposal_move as pmove
 import utils.parsers as parse
 from optim.configs import BOConfig
 import torch
@@ -23,6 +24,10 @@ def main():
     parser.add_argument('--beta', type=float, default=0.1, help='Initial beta parameter (run mode only)')
     parser.add_argument('--end_beta', type=float, default=50.0, help='End beta parameter (run mode only)')
     
+    # Proposal Move
+    parser.add_argument('--proposal_move', type=str, choices=['random', 'delta_move'], default='random',
+                        help='Type of proposal move to use in the solver')
+    
     args = parser.parse_args()
 
     if args.mode == 'optimize':
@@ -44,12 +49,12 @@ def main():
         run_optimization(config, args)
     else:
 
-        while True:
-            scheduler = schedule.ExponentialScheduler(start_beta=0.5, end_beta=58.0, max_iters=args.max_iters)
-            a, e = run_pipeline(args, scheduler=scheduler)
+        #while True:
+        scheduler = schedule.ExponentialScheduler(start_beta=args.beta, end_beta=args.end_beta, max_iters=args.max_iters)
+        a, e = run_pipeline(args, scheduler=scheduler, name_proposal_move=args.proposal_move)
 
-            if e[-1] == 0:
-                break
+        # if e[-1] == 0:
+        #     break
 
 
 if __name__ == '__main__':
