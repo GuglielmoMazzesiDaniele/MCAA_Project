@@ -44,8 +44,12 @@ def main():
         run_optimization(config, args)
     else:
 
-        scheduler = schedule.ReheatScheduler(cycle_estimated_steps=100000, min_beta=0.1, max_beta=50)
-        run_pipeline(args, scheduler=scheduler)
+        while True:
+            scheduler = schedule.ExponentialScheduler(start_beta=0.5, end_beta=58.0, max_iters=args.max_iters)
+            a, e = run_pipeline(args, scheduler=scheduler)
+
+            if e[-1] == 0:
+                break
 
 
 if __name__ == '__main__':
