@@ -269,7 +269,7 @@ class N3Queens:
         old_conflict = self.conflicts_at(rx, ry, self.grid[rx, ry])
 
         potential_energies = np.array([self.conflicts_at(rx, ry, z) if z != self.grid[rx, ry] else old_conflict for z in range(self.N)])
-        exp_energy = np.exp(- self.beta * potential_energies)
+        exp_energy = np.exp(- np.array(self.beta) * potential_energies)
         proba = exp_energy / np.sum(exp_energy)
 
         new_z = np.random.choice(np.arange(self.N), p=proba)
