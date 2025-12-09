@@ -3,5 +3,4 @@ gpytorch==1.14
 matplotlib==3.8.4
 numpy==1.24.3
 torch==2.5.1
-tqdm==4.66.5
 tqdm==4.67.1
