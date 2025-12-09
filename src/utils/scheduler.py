@@ -20,15 +20,11 @@ class ExponentialScheduler(Scheduler):
         self.start_beta = start_beta
         self.end_beta = end_beta
         self.max_iters = max_iters
-<<<<<<< HEAD
-        self.alpha = (end_beta / start_beta) ** (1 / (max_iters * 0.01))
-=======
         # Use provided alpha or compute from start_beta/end_beta/max_iters
         if alpha is not None:
             self.alpha = alpha
         else:
             self.alpha = (end_beta / start_beta) ** (1 / (max_iters))
->>>>>>> refs/remotes/origin/adrien-test-implementation
 
     def step(self, model):
         model.beta = model.beta * self.alpha

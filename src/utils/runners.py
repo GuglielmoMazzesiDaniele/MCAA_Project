@@ -17,7 +17,6 @@ def exponential_parser(v):
     end_beta = v[1]
     return beta, beta, end_beta  # start_beta = beta
 
-
 def exponential_alpha_parser(v):
     """
     Parse optimization vector for ExponentialScheduler with alpha tuning.
