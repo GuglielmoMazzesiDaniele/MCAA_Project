@@ -1,5 +1,5 @@
 import argparse
-from utils.runners import run_optimization, run_pipeline
+from utils.runners import run_optimization, run_pipeline, multiple_simple_runs, run_all_schedulers
 import utils.scheduler as schedule
 import utils.proposal_move as pmove
 import utils.parsers as parse
@@ -8,7 +8,7 @@ import torch
 
 def main():
     parser = argparse.ArgumentParser(description='N3 Queens Problem Solver')
-    parser.add_argument('--mode', type=str, choices=['optimize', 'run'], default='run',
+    parser.add_argument('--mode', type=str, choices=['optimize', 'all_schedulers', 'run'], default='run',
                         help='Mode: "optimize" for BO optimization, "run" for single pipeline run')
     parser.add_argument('--N', type=int, default=8, help='Size of the board (N x N x N)')
     parser.add_argument('--max_iters', type=int, default=20000, help='Maximum number of iterations for the model')
@@ -47,14 +47,16 @@ def main():
         )
 
         run_optimization(config, args)
+    
+    elif args.mode == 'all_schedulers':
+        
+        run_all_schedulers(args, name_proposal_move=args.proposal_move, n_runs=5)
+    
     else:
 
-        #while True:
         scheduler = schedule.ExponentialScheduler(start_beta=args.beta, end_beta=args.end_beta, max_iters=args.max_iters)
-        a, e = run_pipeline(args, scheduler=scheduler, name_proposal_move=args.proposal_move)
+        _, _ = multiple_simple_runs(args, scheduler=scheduler, name_proposal_move=args.proposal_move)
 
-        # if e[-1] == 0:
-        #     break
 
 
 if __name__ == '__main__':

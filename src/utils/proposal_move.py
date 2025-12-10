@@ -13,6 +13,8 @@ offsets = np.array([
 def select_proposal_move(move_type, queen_class):
     if move_type == "random":
         return RandomMove(queen_class)
+    if move_type == "delta_move":
+        return DeltaMove(queen_class)
     else:
         raise ValueError(f"Unknown proposal move type: {move_type}")
 
@@ -72,22 +74,19 @@ class DeltaMove(ProposalMove):
     def neighbors_3d(self, x, y, z):
         
         N = self.queen_class.N
-        all_neighbors = {}
+        #all_neighbors = {}
+        neighs = []
 
-        for x in range(N):
-            for y in range(N):
-                neighs = []
+        for dx, dy, dz in offsets:
+            nx, ny, nz = x + dx, y + dy, z + dz
 
-                for dx, dy, dz in offsets:
-                    nx, ny, nz = x + dx, y + dy, z + dz
+            # keep only neighbors inside the 3D cube
+            if 0 <= nx < N and 0 <= ny < N and 0 <= nz < N:
+                neighs.append((nx, ny, nz))
 
-                    # keep only neighbors inside the 3D cube
-                    if 0 <= nx < N and 0 <= ny < N and 0 <= nz < N:
-                        neighs.append((nx, ny, nz))
+        #all_neighbors[(x, y, z)] = neighs
 
-                all_neighbors[(x, y, z)] = neighs
-
-        return len(all_neighbors), all_neighbors
+        return len(neighs), neighs
     
     def step(self):
         
@@ -98,7 +97,7 @@ class DeltaMove(ProposalMove):
         # old conflicts for this queen
         old_conflicts = self.queen_class.conflicts_at(rx, ry, old_z)
         allowed_cells_before, allowed = self.neighbors_3d(rx, ry, old_z)
-        new_z = allowed[random.randrange(0, allowed_cells_before)][2]
+        new_z = allowed[random.randrange(0, len(allowed))][2]
         
         # new conflicts
         new_conlficts = self.queen_class.conflicts_at(rx, ry, new_z)

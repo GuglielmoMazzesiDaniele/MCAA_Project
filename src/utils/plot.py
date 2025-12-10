@@ -13,13 +13,15 @@ def plot_energy_evolution(energies, args, name_proposal_move, filename):
 
     plt.subplots_adjust(left=0.25)
 
+    patience_display = args.patience if args.reheating else 0
+
     param_text = (
         f"N = {args.N}\n"
         f"K = {args.K}\n"
         f"beta = {args.beta}\n"
         f"max_iters = {args.max_iters}\n"
         f"reheating = {args.reheating}\n"
-        f"patience = {args.patience}\n"
+        f"patience = {patience_display}\n"
         f"move = {name_proposal_move}"
     )
 
@@ -27,6 +29,57 @@ def plot_energy_evolution(energies, args, name_proposal_move, filename):
         0.02, 0.5, param_text,
         va="center",
         fontsize=10,
+        bbox=dict(facecolor="white", alpha=0.85)
+    )
+
+    plt.savefig(filename, dpi=300)
+    plt.close()
+    
+def plot_all_schedulers(energies_dict, args, name_proposal_move, n_runs, filename):
+    """
+    Plot the energy evolution for all schedulers on a single plot.
+    
+    energies_dict: {
+        scheduler_name : {
+            'energy': energy_array,
+            'successes': int
+        }
+    }
+    """
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Plot each scheduler
+    for name, data in energies_dict.items():
+        energy = data['energy']
+        successes = data['successes']
+
+        label = f"{name} (success = {successes})"
+        ax.plot(energy[::100], label=label)
+
+    ax.set_xlabel("Iteration")
+    ax.set_ylabel("Average Energy")
+    ax.set_title(f"Average Energy Evolution for Different Schedulers ({n_runs} runs each)")
+    ax.legend()
+
+    # Add parameter box on the left
+    plt.subplots_adjust(left=0.28)
+
+    patience_display = args.patience if args.reheating else 0
+
+    param_text = (
+        f"N = {args.N}\n"
+        f"K = {args.K}\n"
+        f"beta = {args.beta}\n"
+        f"max_iters = {args.max_iters}\n"
+        f"reheating = {args.reheating}\n"
+        f"patience = {patience_display}\n"
+        f"move = {name_proposal_move}"
+    )
+
+    fig.text(
+        0.02, 0.5, param_text,
+        va="center", fontsize=10,
         bbox=dict(facecolor="white", alpha=0.85)
     )
 

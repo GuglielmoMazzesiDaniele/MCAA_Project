@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from utils.scheduler import ConstantScheduler, Scheduler
-from utils.proposal_move import RandomMove, ProposalMove, select_proposal_move
+from utils.proposal_move import select_proposal_move
     
 class N3Queens:
     def __init__(self, N=8, 
@@ -50,7 +50,6 @@ class N3Queens:
 
         for t in range(1, self.max_iters + 1):
             self.t = t
-            #self.step()
             self.proposal_move.step()
             self.scheduler.step(self)
             energies.append(self.current_energy)
