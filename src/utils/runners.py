@@ -2,7 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 import N3Queens2DGrid
 from utils.scheduler import *
-from utils.plot import plot_energy_evolution, plot_all_schedulers
+from utils.plot import plot_energy_evolution, plot_all_schedulers, plot_vary_n
 
 from optim.configs import BOConfig
 from optim.bo_optim import optimize_with_bo
@@ -57,6 +57,9 @@ def run_pipeline(args, scheduler, name_proposal_move):
 
     assignments, energies = q_problem.solve()
     
+    if(energies[-1] == 0):
+        print(f"Final configuration that worked:\n{assignments}")
+    
     print(f"\nPipeline complete!")
     print(f"Minimal energy: {min(energies)}")
     
@@ -71,6 +74,7 @@ def multiple_simple_runs(args, scheduler, name_proposal_move, n_runs=5):
     
     for run_idx in range(n_runs):
         print(f"\nStarting run {run_idx + 1}/{n_runs}")
+        
         q_problem = N3Queens2DGrid.N3Queens(
             N=args.N,
             max_iters=args.max_iters,
@@ -82,11 +86,12 @@ def multiple_simple_runs(args, scheduler, name_proposal_move, n_runs=5):
             name_proposal_move=name_proposal_move
         )
 
-        _, energies = q_problem.solve()
+        config, energies = q_problem.solve()
         
         # Record success
         if energies[-1] == 0:
             number_of_successes += 1
+            print(f"Final configuration that worked:\n{config}")
         
         # Pad energies to max_iters if needed, if we get 0 at some point and we exit early
         if len(energies) < args.max_iters:
@@ -102,7 +107,7 @@ def multiple_simple_runs(args, scheduler, name_proposal_move, n_runs=5):
 
     avg_energies = np.nanmean(arr, axis=0).tolist()
     
-    plot_energy_evolution(avg_energies, args, name_proposal_move, filename="average_energy.png")
+    plot_energy_evolution(avg_energies, number_of_successes, args, name_proposal_move, filename="average_energy.png")
     
     return avg_energies, number_of_successes
 
@@ -112,8 +117,6 @@ def run_all_schedulers(args, name_proposal_move, n_runs=5):
     schedulers = [
         ExponentialScheduler(start_beta=args.beta, end_beta=args.end_beta, max_iters=args.max_iters),
         ConstantScheduler(beta=args.beta),
-        # GeometricScheduler(alpha=1.5),
-        # LinearScheduler(a=2.0, b=0.0),
         LogScheduler(alpha=0.2)
     ]
     
@@ -129,7 +132,43 @@ def run_all_schedulers(args, name_proposal_move, n_runs=5):
         
     plot_all_schedulers(energies, args, name_proposal_move, n_runs, filename="all_schedulers_comparison.png")
 
+def vary_n_values(args, scheduler, name_proposal_move, n_min, n_max, n_runs=5):
+    all_minimal_energies = []
+    number_of_successes = np.zeros(n_max - n_min + 1, dtype=int)
+    i = 0
+    
+    for N in range(n_min, n_max + 1):
+        temp = []
+        for run_idx in range(n_runs):
+            print(f"\nStarting run with N={N}, {run_idx + 1}/{n_runs}")
+            
+            q_problem = N3Queens2DGrid.N3Queens(
+                N=N,
+                max_iters=args.max_iters,
+                scheduler=scheduler,
+                beta=args.beta,
+                reheating=args.reheating,
+                patience=args.patience,
+                K=args.K,
+                name_proposal_move=name_proposal_move
+            )
 
+            config, energies = q_problem.solve()
+            
+            # Record success
+            if energies[-1] == 0:
+                number_of_successes[i] += 1
+                print(f"Final configuration that worked:\n{config}")
+                
+            temp.append(min(energies))
+
+        avg_energies = np.mean(temp).tolist()
+        all_minimal_energies.append(avg_energies)
+        i += 1
+        
+        
+    plot_vary_n(all_minimal_energies, number_of_successes, args, name_proposal_move, n_min, n_max, n_runs, filename="vary_n_comparison.png")
+    return None, None
 
 
 

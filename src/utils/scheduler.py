@@ -81,6 +81,26 @@ class LogScheduler(Scheduler):
     def step(self, model):
         model.beta = self.alpha * np.log(2 * model.t)
         
+class LogisticScheduler(Scheduler):
+    def __init__(self, beta_max, k=10.0, total_iters=500000):
+        self.beta_max = beta_max
+        self.k = k / total_iters
+        self.mid = total_iters / 2
+
+    def step(self, model):
+        t = model.t
+        model.beta = self.beta_max / (1 + np.exp(-self.k * (t - self.mid)))
+        
+class PowerScheduler(Scheduler):
+    def __init__(self, beta_max, p=1.5, total_iters=500000):
+        self.beta_max = beta_max
+        self.p = p
+        self.T = total_iters
+
+    def step(self, model):
+        t = min(model.t, self.T)
+        model.beta = self.beta_max * (t / self.T) ** self.p
+        
     @staticmethod
     def name():
         return "logarithmic"

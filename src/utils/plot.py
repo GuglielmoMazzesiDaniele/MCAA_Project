@@ -1,12 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_energy_evolution(energies, args, name_proposal_move, filename):
+def plot_energy_evolution(energies, successes, args, name_proposal_move, filename):
     """Plot the energy (every 100 element) evolution during the pipeline run."""
     
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    ax.plot(energies[::100])
+    label = f"(success = {successes})"
+    ax.plot(energies[::100], label=label)
+    ax.legend()
     ax.set_xlabel("Iteration")
     ax.set_ylabel("Energy")
     ax.set_title("Energy Evolution")
@@ -85,6 +87,71 @@ def plot_all_schedulers(energies_dict, args, name_proposal_move, n_runs, filenam
 
     plt.savefig(filename, dpi=300)
     plt.close()
+    
+import matplotlib.pyplot as plt
+import numpy as np
+
+def plot_vary_n(all_minimal_energies, number_of_successes, args, name_proposal_move,
+                n_min, n_max, n_runs, filename="vary_n_comparison.png"):
+
+    Ns = np.arange(n_min, n_max + 1)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # --- Plot minimal energies ---
+    ax.plot(Ns, all_minimal_energies, marker='o', label="Minimal Energies")
+    ax.set_xlabel("N")
+    ax.set_ylabel("Minimal Energy")
+    ax.set_title(f"Minimal Energy per N ({n_runs} runs each)")
+    ax.legend()
+
+    # --- Add success info below each N ---
+    ymin, ymax = ax.get_ylim()
+    y_text_level = ymin - 0.05*(ymax - ymin)
+
+    for x, s in zip(Ns, number_of_successes):
+        color = "green" if s > 0 else "red"
+        ax.text(
+            x, y_text_level,
+            f"{s}/{n_runs}",
+            ha='center',
+            va='top',
+            fontsize=9,
+            color=color,
+            bbox=dict(facecolor='white', edgecolor=color, boxstyle="round,pad=0.2")
+        )
+
+    # Extend limits to show text box
+    ax.set_ylim(ymin - 0.12*(ymax - ymin), ymax)
+
+    # --- Parameter box on the left ---
+    plt.subplots_adjust(left=0.28)
+
+    patience_display = args.patience if args.reheating else 0
+
+    param_text = (
+        f"n_min = {n_min}\n"
+        f"n_max = {n_max}\n"
+        f"runs = {n_runs}\n"
+        f"K = {args.K}\n"
+        f"beta = {args.beta}\n"
+        f"max_iters = {args.max_iters}\n"
+        f"reheating = {args.reheating}\n"
+        f"patience = {patience_display}\n"
+        f"move = {name_proposal_move}"
+    )
+
+    fig.text(
+        0.02, 0.5, param_text,
+        va="center",
+        fontsize=10,
+        bbox=dict(facecolor="white", alpha=0.85)
+    )
+
+    plt.savefig(filename, dpi=300)
+    plt.close()
+
+
     
 def plot_3d_queens(config, args, filename):
     """Draw a 3D NxNxN chessboard and the N^2 queens as red spheres/dots."""
