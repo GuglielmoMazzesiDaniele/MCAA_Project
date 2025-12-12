@@ -70,7 +70,7 @@ class N3Queens:
                 self.shuffle_and_reheat(self.N)
                 print(f"SHUFFLE shuffle queens at step {t}: Energy = {self.current_energy}, Beta = {self.beta:.2f}")
 
-        print(f"Algorithm did not converge in {self.max_iters} steps, final energy : {energies[-1]}")
+        print(f"Algorithm did not converge in {self.max_iters} steps, final energy : {energies[-1]}, single conflict are : {self.count_queens_with_conflicts()}")
         return self.format_output(), energies
 
     def step(self):
