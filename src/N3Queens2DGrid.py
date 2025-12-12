@@ -10,7 +10,7 @@ class N3Queens:
                  scheduler : Scheduler = None,
                  reheating : bool = False,
                  patience : int = 10000,
-                 mh: bool = True):
+                 gibbs: bool = False):
         self.N = N
         self.max_iters = max_iters
         
@@ -23,13 +23,16 @@ class N3Queens:
         self.scheduler = scheduler if scheduler != None else ConstantScheduler(self.beta)
 
         self.X, self.Y = np.indices((N, N))
-        self.initialize(K)
-        self.mh = mh
-
+        self.gibbs = gibbs
         self.n_queens_shuffle = self.N**2
+
+        self.initialize(K)
 
     def initialize(self, k = None):
         """Randomize the board"""
+
+        print(f'Gibbs sampling: {self.gibbs}')
+
         if k == None:
             self.grid = np.random.randint(0, self.N, size=(self.N, self.N))
             self.current_energy = self.compute_initial_energy()
@@ -46,7 +49,12 @@ class N3Queens:
 
         for t in range(1, self.max_iters + 1):
             self.t = t
-            self.step()
+
+            if self.gibbs:
+                self.gibbs_step()
+            else : 
+                self.step()
+            
             self.scheduler.step(self)
             energies.append(self.current_energy)
 
@@ -265,3 +273,26 @@ class N3Queens:
         return conflicts
     
 
+    def gibbs_step(self):
+        
+        rx, ry = random.randrange(0, self.N), random.randrange(0, self.N)
+        
+        old_conflict = self.conflicts_at(rx, ry, self.grid[rx, ry])
+
+        potential_energies = np.array([self.conflicts_at(rx, ry, z) if z != self.grid[rx, ry] else old_conflict for z in range(self.N)])
+        exp_energy = np.exp(- np.array(self.beta) * potential_energies)
+        proba = exp_energy / np.sum(exp_energy)
+
+        new_z = np.random.choice(np.arange(self.N), p=proba)
+
+        new_conflict = potential_energies[new_z]
+        delta_e = new_conflict - old_conflict
+
+        if delta_e < 0:
+            self.last_mod = self.t
+
+        self.grid[rx, ry] = new_z
+        self.current_energy += delta_e
+
+
+        
