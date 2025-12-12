@@ -52,7 +52,7 @@ class N3Queens:
 
             if self.current_energy == 0:
                 print(f"Solved in {t} steps")
-                print(f"number of conflict energy : {self.compute_initial_energy()}")
+                print(f"number of conflict energy : {self.compute_initial_energy()}, number of single conflicting queens : {self.count_queens_with_conflicts()}")
                 return self.format_output(), energies
             
             if t % 5000 == 0:
@@ -124,6 +124,17 @@ class N3Queens:
             for y in range(self.N):
                 queens.append((x, y, self.grid[x, y]))
         return np.array(queens)
+    
+    def count_queens_with_conflicts(self):
+        """
+        Returns the number of individual queens that have at least one conflict.
+        """
+        count = 0
+        for x in range(self.N):
+            for y in range(self.N):
+                if self.conflicts_at(x, y, self.grid[x, y]) > 0:
+                    count += 1
+        return count
     
     def smart_init(self, k):
         """
@@ -252,3 +263,5 @@ class N3Queens:
                 conflicts += 1
                 
         return conflicts
+    
+
