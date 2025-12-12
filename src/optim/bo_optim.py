@@ -23,6 +23,11 @@ def log_successful_params(log_file, params, beta, scheduler_params, energy, iter
         params_str = ", ".join([f"param_{i}: {p:.6f}" for i, p in enumerate(scheduler_params)])
         f.write(f"[{datetime.now().isoformat()}] Iteration {iteration} | N={N}, K={K} | "
                 f"beta: {beta:.6f}, {params_str} | Final energy: {energy}\n")
+        
+def log_config(log_file, config):
+    """Log config that successfully converged to energy 0."""
+    with open(log_file, 'a') as f:
+        f.write(f"[{datetime.now().isoformat()}] | {config}\n")
 
 def output_parser(v):
     beta = v[0] 
@@ -160,6 +165,7 @@ def optimize_with_bo(
         # Log if converged to 0
         if final_energy == 0:
             log_successful_params(log_file, next, beta, scheduler_params, final_energy, iter_idx, N, model_kwargs.get('k', None))
+            log_config("log_config.log", final_config)
         
         y_train = torch.cat([y_train, torch.tensor([[-final_energy]], dtype=datatype)])
         x_train = torch.cat([x_train, next])
