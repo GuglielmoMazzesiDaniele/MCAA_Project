@@ -34,7 +34,7 @@ def main():
         
         _bounds = torch.tensor(
             [[0.01, 10.0],
-            [1.0, 100.0]]
+            [1.0, 50.0]]
         , dtype=torch.double)
 
         config = BOConfig(
