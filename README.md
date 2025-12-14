@@ -56,5 +56,21 @@ Future Works Features
 
 ## Command Arguments for Plots in Report
 Find below the commands used for generating the different plots in the report.
+## Running Experiments
+Run `pip install -r requirements.txt` to install dependencies.
 
-TODO HERE ADRIEN
+To compare the performance of all the scheduling over a range of N from N=3 to N=17, run :
+```bash
+python main.py --max_iters=3000000 --beta=1.1 --end_beta=10.0 --mode vary_n
+```
+
+To try to solve the problem for a cube of side `N = n`, run :
+```bash
+python main.py --max_iters=your_maxiters --beta=your_start_beta --end_beta=your_end_beta --mode run --N n
+```
+Note : to make our plots for  `N=11` and `N=13`, we used : 
+```bash
+python main.py --max_iters=3000000 --beta=1.1 --end_beta=10.0 --mode run --N 11
+```
+```bash
+python main.py --max_iters=3000000 --beta=1.1 --end_beta=10.0 --mode run --N 13
