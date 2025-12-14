@@ -117,7 +117,6 @@ def metropolis_fast(config, occupied_set, N, E_old, beta):
     
     # Select queen index based on weights, return also its weight and the total weight before move
     idx, c_old, total_weight_before = sample_worst_queen(config)
-    print(f"Selected queen {idx} with weight {c_old}")
 
     # pick new empty cell and check it is empty
     while True:
@@ -225,11 +224,11 @@ def run_time_vs_N(beta, schedule):
     
 def main():
     N = 11
-    beta0 = 0.03
+    beta0 = 1.0
     for i in range(1):
         
         print("Running solver...")
-        config, energies = solve_3d_queens(N, steps=4000, beta0=beta0, schedule=True)
+        config, energies = solve_3d_queens(N, steps=5000, beta0=beta0, schedule=False)
 
         print("Final energy:", energies[-1])
         N += 1
