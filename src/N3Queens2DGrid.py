@@ -4,7 +4,8 @@ from utils.scheduler import ConstantScheduler, Scheduler
 from utils.proposal_move import select_proposal_move
     
 class N3Queens:
-    def __init__(self, N=8, 
+    def __init__(self, 
+                 N=8, 
                  max_iters=20000, 
                  beta=0.5, 
                  K = None, 
@@ -13,6 +14,20 @@ class N3Queens:
                  reheating : bool = False,
                  patience : int = 10000,
                  gibbs: bool = False):
+        
+        """
+        N-3 Queens problem in a 2D grid representation
+        :param N: Size of the grid (N x N) and number of queens
+        :param max_iters: Maximum number of iterations to perform
+        :param beta: Initial beta parameter for simulated annealing, else fixed beta
+        :param K: Number of non-conflicting queens to initialize with (if None, random initialization)
+        :param scheduler: Scheduler object to manage beta updates
+        :param name_proposal_move: Name of the proposal move strategy to use
+        :param reheating: Whether to use reheating strategy
+        :param patience: Number of iterations to wait before reheating
+        :param gibbs: Whether to use Gibbs sampling for updates
+        """
+
         self.N = N
         self.max_iters = max_iters
         
@@ -33,9 +48,7 @@ class N3Queens:
         self.initialize(K)
 
     def initialize(self, k = None):
-        """Randomize the board"""
-
-        print(f'Gibbs sampling: {self.gibbs}')
+        """Randomize the board for initialization or use smart initialization"""
 
         if k == None:
             self.grid = np.random.randint(0, self.N, size=(self.N, self.N))
@@ -80,6 +93,14 @@ class N3Queens:
         return self.format_output(), energies, self.count_queens_with_conflicts()
 
     def conflicts_at(self, x, y, z):
+        """
+        Compute the number of conflicts for a queen at position (x, y, z)
+        1. Axis (Horizontal only, since Vertical is impossible by loop)
+           Same Z, and aligned on X or Y
+        2. 2D Diagonals
+        3. 3D Diagonal
+        4. Return total number of conflicts
+        """
         DX = self.X - x
         DY = self.Y - y 
         DZ = self.grid - z
@@ -102,6 +123,12 @@ class N3Queens:
         return tot
 
     def compute_initial_energy(self):
+        """
+        Compute the total number of conflicts in the current grid configuration
+        1. For each queen, compute its conflicts
+        2. Sum all conflicts and divide by 2 (since each conflict is counted twice)
+        3. Return total energy
+        """
         E = 0
         for x in range(self.N):
             for y in range(self.N):
@@ -279,6 +306,3 @@ class N3Queens:
 
                 self.grid[rx, ry] = new_z
                 self.current_energy += delta_e
-
-
-        

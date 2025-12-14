@@ -6,6 +6,7 @@ from optim.configs import BOConfig
 import torch
 from utils.runners import run_multi_scheduler_optimization
 
+"""Main entry point for N3 Queens Problem Solver."""
 
 def main():
     parser = argparse.ArgumentParser(description='N3 Queens Problem Solver')
