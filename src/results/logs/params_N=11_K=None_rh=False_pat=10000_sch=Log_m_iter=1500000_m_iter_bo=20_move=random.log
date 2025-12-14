@@ -1,0 +1,15 @@
+[2025-12-13T10:28:30.601993] Iteration 2 | N=11, K=None | beta: 0.398713, param_0: 0.398713, param_1: 4.560398 | Final energy: 0
+[2025-12-13T10:29:24.996561] Iteration 4 | N=11, K=None | beta: 0.334878, param_0: 0.334878, param_1: 2.882231 | Final energy: 0
+[2025-12-13T10:29:32.993098] Iteration 5 | N=11, K=None | beta: 0.310918, param_0: 0.310918, param_1: 2.385654 | Final energy: 0
+[2025-12-13T10:29:35.313314] Iteration 6 | N=11, K=None | beta: 0.299274, param_0: 0.299274, param_1: 1.953021 | Final energy: 0
+[2025-12-13T10:29:36.360207] Iteration 7 | N=11, K=None | beta: 0.259295, param_0: 0.259295, param_1: 2.279355 | Final energy: 0
+[2025-12-13T10:29:49.688892] Iteration 8 | N=11, K=None | beta: 0.314804, param_0: 0.314804, param_1: 1.421784 | Final energy: 0
+[2025-12-13T10:29:59.352727] Iteration 9 | N=11, K=None | beta: 0.235800, param_0: 0.235800, param_1: 1.683281 | Final energy: 0
+[2025-12-13T10:30:54.784249] Iteration 11 | N=11, K=None | beta: 0.209701, param_0: 0.209701, param_1: 2.368237 | Final energy: 0
+[2025-12-13T10:31:52.088626] Iteration 13 | N=11, K=None | beta: 0.352632, param_0: 0.352632, param_1: 1.716441 | Final energy: 0
+[2025-12-13T10:31:59.018662] Iteration 14 | N=11, K=None | beta: 0.394466, param_0: 0.394466, param_1: 2.586488 | Final energy: 0
+[2025-12-13T10:32:02.944719] Iteration 15 | N=11, K=None | beta: 0.396107, param_0: 0.396107, param_1: 1.845596 | Final energy: 0
+[2025-12-13T10:32:09.043535] Iteration 16 | N=11, K=None | beta: 0.360613, param_0: 0.360613, param_1: 1.788617 | Final energy: 0
+[2025-12-13T10:32:12.286526] Iteration 17 | N=11, K=None | beta: 0.444356, param_0: 0.444356, param_1: 2.591811 | Final energy: 0
+[2025-12-13T10:32:19.872397] Iteration 18 | N=11, K=None | beta: 0.243585, param_0: 0.243585, param_1: 1.742515 | Final energy: 0
+[2025-12-13T10:32:22.299570] Iteration 19 | N=11, K=None | beta: 0.430570, param_0: 0.430570, param_1: 1.742512 | Final energy: 0

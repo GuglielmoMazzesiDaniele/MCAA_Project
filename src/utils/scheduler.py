@@ -12,18 +12,37 @@ class Scheduler(ABC):
         pass
 
 class StepScheduler(Scheduler):
-    def __init__(self, beta, stepsize = 100):
-        pass
+    def __init__(self, gamma=2.0, step_size=25000):
+        """
+        Multiplies the current beta by 'gamma' every 'step_size' iterations.
+        
+        Args:
+            gamma (float): The multiplicative factor.
+            step_size (int): The number of iterations to wait before increasing beta.
+        """
+        self.gamma = gamma
+        self.step_size = step_size
 
     def step(self, model):
+        if model.t == 1 : 
+            self.init_beta = model.beta
+
+        if model.t > 0 and model.t % self.step_size == 0:
+            model.beta *= self.gamma
+
+    def reset(self, model):
+        model.beta = self.init_beta
         pass
+    
+    @staticmethod
+    def name():
+        return "step"
 
 class ExponentialScheduler(Scheduler):
     def __init__(self, start_beta=0.1, end_beta=50.0, max_iters=100000, alpha=None):
         self.start_beta = start_beta
         self.end_beta = end_beta
         self.max_iters = max_iters
-        # Use provided alpha or compute from start_beta/end_beta/max_iters
         if alpha is not None:
             self.alpha = alpha
         else:
@@ -32,10 +51,6 @@ class ExponentialScheduler(Scheduler):
     def step(self, model):
         model.beta = model.beta * self.alpha
 
-    def reset(self, model):
-        self.alpha = (self.end_beta / self.start_beta) ** (1 / (self.max_iters - model.t))
-        pass
-    
     @staticmethod
     def name():
         return "exponential"
@@ -75,11 +90,29 @@ class LinearScheduler(Scheduler):
         return "linear"
 
 class LogScheduler(Scheduler):
-    def __init__(self, alpha=0.2):
-        self.alpha = alpha
+    def __init__(self, start_beta=0.1, end_beta=50.0, max_iters=100000):
+        """
+        Formula: beta(t) = start_beta + C * log(t) - 5.5
+        
+        At t=1:         beta = start + C * 0           = start_beta
+        At t=max_iters: beta = start + C * log(max)    = end_beta
+        """
+        self.start_beta = start_beta
+        self.end_beta = end_beta
+        self.max_iters = max_iters
+        
+        if max_iters > 1:
+            self.C = (end_beta - start_beta) / np.log(max_iters)
+        else:
+            self.C = 0
 
     def step(self, model):
-        model.beta = self.alpha * np.log(2 * model.t)
+        t = max(1, model.t)
+        
+        model.beta = self.start_beta + self.C * np.log(t) - 5.5
+
+    def reset(self, model):
+        model.beta = self.start_beta
         
     @staticmethod
     def name():
@@ -112,4 +145,3 @@ class PowerScheduler(Scheduler):
     @staticmethod
     def name():
         return "power"
-
