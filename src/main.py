@@ -59,8 +59,8 @@ def main():
     
     else:
 
-        #scheduler = schedule.ExponentialScheduler(start_beta=args.beta, end_beta=args.end_beta, max_iters=args.max_iters)
-        scheduler = schedule.LogScheduler(alpha=0.2)
+        scheduler = schedule.ExponentialScheduler(start_beta=args.beta, end_beta=args.end_beta, max_iters=args.max_iters)
+        #scheduler = schedule.LogScheduler(alpha=0.2)
         #scheduler = schedule.LogisticScheduler(beta_max=args.end_beta, k=10.0, total_iters=args.max_iters)
         #scheduler = schedule.PowerScheduler(beta_max=args.end_beta, p=1.2, total_iters=args.max_iters)
         _, _ = multiple_simple_runs(args, scheduler=scheduler, name_proposal_move=args.proposal_move, n_runs=5)
