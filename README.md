@@ -10,6 +10,7 @@ The codebase is structured in the following way:
 - src/optim:              Bayesian Optimization functions
 - src/utils:              Utiility functions for plots, definition of schedulers and proposal moves for the queens
 - src/N3Queens2DGrid.py:  Metropolis-Hastings Algorithm Implementation
+- src/weighted_queens.py: Weighted Queens proposal move, not implemented in the final code due to its final complexity too high
 
 ## Running Experiments
 The following tables show how you can run your experimentations. 
