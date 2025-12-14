@@ -137,7 +137,7 @@ def optimize_with_bo(
 
     for i, x in enumerate(x_train):
         beta, *scheduler_params = output_parser(x.flatten())
-        scheduler = scheduler_class(*scheduler_params)
+        scheduler = scheduler_class(max_iters=max_iters_model, *scheduler_params)
         model = N3Queens2DGrid.N3Queens(N=N, beta=beta, scheduler=scheduler, max_iters=max_iters_model, **model_kwargs)
         final_config, energies = model.solve()
         final_energy = energies[-1]
@@ -156,7 +156,7 @@ def optimize_with_bo(
         next = next_point(x_train, y_train, bounds, device=device, num_restarts=num_restarts)
         next = next.to(dtype=datatype)
         beta, *scheduler_params = output_parser(next.flatten())
-        scheduler = scheduler_class(*scheduler_params)
+        scheduler = scheduler_class(max_iters=max_iters_model, *scheduler_params)
         model = N3Queens2DGrid.N3Queens(beta=beta, scheduler=scheduler, N=N, max_iters=max_iters_model, **model_kwargs)
 
         final_config, energies = model.solve()

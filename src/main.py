@@ -180,8 +180,7 @@ def main():
             "AdaptiveStep": config_adaptive_step
         }
         
-        results = run_multi_scheduler_optimization(all_scheduler_configs, args, stop_on_success=False)
-        print(results)
+        run_multi_scheduler_optimization(all_scheduler_configs, args, stop_on_success=False)
     
     elif args.mode == 'all_schedulers':
         

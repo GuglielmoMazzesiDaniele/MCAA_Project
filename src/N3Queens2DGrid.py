@@ -20,8 +20,8 @@ class N3Queens:
         self.patience = patience
 
         self.last_mod = 1
-        self.checkpoint_beta = beta
         self.beta = beta
+        self.start_beta = self.beta
         self.scheduler = scheduler if scheduler != None else ConstantScheduler(self.beta)
         
         self.proposal_move = select_proposal_move(name_proposal_move, self)
@@ -53,24 +53,31 @@ class N3Queens:
 
         for t in range(1, self.max_iters + 1):
             self.t = t
-            self.proposal_move.step()
+
+            if self.gibbs : 
+                self.gibbs_step()
+            else : 
+                self.proposal_move.step()
+
             self.scheduler.step(self)
             energies.append(self.current_energy)
 
             if self.current_energy == 0:
                 print(f"Solved in {t} steps")
                 print(f"number of conflict energy : {self.compute_initial_energy()}, number of single conflicting queens : {self.count_queens_with_conflicts()}")
-                return self.format_output(), energies
+                return self.format_output(), energies, self.count_queens_with_conflicts()
             
             if t % 5000 == 0:
                 print(f"Step {t}: Energy = {self.current_energy}, Beta = {self.beta:.2f}")
 
             if self.reheating and ((self.t - self.last_mod) >= self.patience):
                 self.shuffle_and_reheat(self.N)
+                self.beta = self.start_beta
+                self.last_mod = self.t
                 print(f"SHUFFLE shuffle queens at step {t}: Energy = {self.current_energy}, Beta = {self.beta:.2f}")
 
         print(f"Algorithm did not converge in {self.max_iters} steps, final energy : {energies[-1]}, single conflict are : {self.count_queens_with_conflicts()}")
-        return self.format_output(), energies
+        return self.format_output(), energies, self.count_queens_with_conflicts()
 
     def conflicts_at(self, x, y, z):
         DX = self.X - x
@@ -175,8 +182,6 @@ class N3Queens:
         is more than 0, then it will try to pick a few queens and then shuffle them by assigning them
         with a random value, recompute the energy of the model, and then restore a previous value for 
         beta
-
-        ## TODO add a def reset() to the schedulers (Linear schedulers might struggle with this otherwise)
         """
         #First we want to pick Q queens
         picked = []
@@ -199,9 +204,6 @@ class N3Queens:
         
         new_e = self.compute_initial_energy()
         
-        if self.current_energy < new_e:
-            self.beta = self.checkpoint_beta
-
         self.current_energy = new_e
         self.last_mod = self.t
         self.scheduler.reset(self)
@@ -219,16 +221,12 @@ class N3Queens:
         else:
             targets = placed_queens
 
-        # Vectorized check is hard with a partial list, so we do a quick loop.
-        # Since this runs only once at init, it's fine.
         for (tx, ty) in targets:
             tz = self.grid[tx, ty]
             
             dx = abs(x - tx)
             dy = abs(y - ty)
             dz = abs(z - tz)
-            
-            # Check for conflicts (Same logic as standard check)
             
             # 1. Axis (Horizontal only, since Vertical is impossible by loop)
             # Same Z, and aligned on X or Y
@@ -246,32 +244,41 @@ class N3Queens:
                 conflicts += 1
                 
         return conflicts
-    
 
     def gibbs_step(self):
-        
-        rx, ry = random.randrange(0, self.N), random.randrange(0, self.N)
-        
-        old_conflict = self.conflicts_at(rx, ry, self.grid[rx, ry])
+            rx, ry = random.randrange(0, self.N), random.randrange(0, self.N)
+            current_z = self.grid[rx, ry]
+            
+            potential_energies = []
+            for z in range(self.N):
+                if z == current_z:
+                    potential_energies.append(self.conflicts_at(rx, ry, current_z))
+                else:
+                    potential_energies.append(self.conflicts_at(rx, ry, z))
+            
+            potential_energies = np.array(potential_energies)
 
-        potential_energies = np.array([self.conflicts_at(rx, ry, z) if z != self.grid[rx, ry] else old_conflict for z in range(self.N)])
-        # exp_energy = np.exp(- np.array(self.beta) * potential_energies)
-        
-        min_E = np.min(potential_energies)
-        shifted_energies = potential_energies - min_E
-        exp_energy = np.exp(- np.array(self.beta) * shifted_energies)
-        proba = exp_energy / np.sum(exp_energy)
+            min_E = np.min(potential_energies)
+            stable_energies = potential_energies - min_E
+            
+            beta_val = self.beta.item() if hasattr(self.beta, "item") else self.beta
+            
+            weights = np.exp(-beta_val * stable_energies)
+            probs = weights / np.sum(weights)
 
-        new_z = np.random.choice(np.arange(self.N), p=proba)
+            new_z = np.random.choice(np.arange(self.N), p=probs)
 
-        new_conflict = potential_energies[new_z]
-        delta_e = new_conflict - old_conflict
+            if new_z != current_z:
+                old_conflict = potential_energies[current_z]
+                new_conflict = potential_energies[new_z]
+                
+                delta_e = new_conflict - old_conflict
 
-        if delta_e < 0:
-            self.last_mod = self.t
+                if delta_e < 0:
+                    self.last_mod = self.t
 
-        self.grid[rx, ry] = new_z
-        self.current_energy += delta_e
+                self.grid[rx, ry] = new_z
+                self.current_energy += delta_e
 
 
         
