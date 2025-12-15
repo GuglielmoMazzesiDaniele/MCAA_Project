@@ -306,3 +306,27 @@ class N3Queens:
 
                 self.grid[rx, ry] = new_z
                 self.current_energy += delta_e
+
+    def write_solution_file(self, filepath: str, grid: np.ndarray | None = None) -> None:
+        """
+        Export the current configuration to a file with N^2 lines.
+        Each line contains 'x,y,z' (0-based) separated by commas.
+
+        Parameters
+        ----------
+        filepath : str
+            Path of the output file to write.
+        grid : np.ndarray, optional
+            If provided, exports this grid instead of self.grid. Must be shape (N, N)
+            with integer entries in {0, ..., N-1}.
+        """
+        g = self.grid if grid is None else grid
+
+        if np.any(g < 0) or np.any(g >= self.N):
+            raise ValueError("grid contains z values outside {0, ..., N-1}")
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            for x in range(self.N):
+                for y in range(self.N):
+                    z = int(g[x, y])
+                    f.write(f"{x},{y},{z}\n")
